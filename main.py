@@ -33,7 +33,8 @@ app = FastAPI(
     version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
+    openapi_url="/openapi.json"
 )
 
 # Add CORS middleware first
@@ -79,6 +80,11 @@ async def health_check(db: Session = Depends(get_db)):
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
+@app.get("/openapi.json")
+async def get_openapi():
+    """Get OpenAPI specification"""
+    return app.openapi()
 
 # Include routers - import from endpoints
 from app.api.v1.endpoints import auth, users, hr, crm, projects, analytics
