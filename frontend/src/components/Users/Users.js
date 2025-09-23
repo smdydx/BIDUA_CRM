@@ -1,25 +1,28 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
+  Container,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  Button,
+  Typography,
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  IconButton,
+  MenuItem,
   Chip,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import { Add, Edit, Delete, Visibility } from '@mui/icons-material';
+import { Add, Edit, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
@@ -28,10 +31,12 @@ const Users = () => {
   const [open, setOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUser, setCurrentUser] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
-    role: 'user'
+    first_name: '',
+    last_name: '',
+    role: 'employee'
   });
 
   useEffect(() => {
@@ -52,7 +57,14 @@ const Users = () => {
       setCurrentUser(user);
       setEditMode(true);
     } else {
-      setCurrentUser({ name: '', email: '', password: '', role: 'user' });
+      setCurrentUser({ 
+        username: '', 
+        email: '', 
+        password: '', 
+        first_name: '', 
+        last_name: '', 
+        role: 'employee' 
+      });
       setEditMode(false);
     }
     setOpen(true);
@@ -60,7 +72,14 @@ const Users = () => {
 
   const handleClose = () => {
     setOpen(false);
-    setCurrentUser({ name: '', email: '', password: '', role: 'user' });
+    setCurrentUser({ 
+      username: '', 
+      email: '', 
+      password: '', 
+      first_name: '', 
+      last_name: '', 
+      role: 'employee' 
+    });
   };
 
   const handleSubmit = async () => {
@@ -91,11 +110,21 @@ const Users = () => {
     }
   };
 
+  const getRoleColor = (role) => {
+    const colors = {
+      admin: 'error',
+      manager: 'warning',
+      hr: 'info',
+      employee: 'success'
+    };
+    return colors[role] || 'default';
+  };
+
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
-          Users Management
+    <Container maxWidth="lg">
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" component="h1">
+          User Management
         </Typography>
         <Button
           variant="contained"
@@ -106,51 +135,51 @@ const Users = () => {
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>{user.id}</TableCell>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.role || 'user'} 
-                    color={user.role === 'admin' ? 'secondary' : 'primary'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.is_active ? 'Active' : 'Inactive'} 
-                    color={user.is_active ? 'success' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpen(user)} color="primary">
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(user.id)} color="error">
-                    <Delete />
-                  </IconButton>
-                </TableCell>
+      <Paper>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Username</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>
+                    {user.first_name} {user.last_name}
+                  </TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={user.role} 
+                      color={getRoleColor(user.role)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Edit">
+                      <IconButton onClick={() => handleOpen(user)}>
+                        <Edit />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete">
+                      <IconButton onClick={() => handleDelete(user.id)}>
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
@@ -158,17 +187,36 @@ const Users = () => {
         </DialogTitle>
         <DialogContent>
           <TextField
+            autoFocus
             margin="dense"
-            label="Name"
+            label="First Name"
             fullWidth
-            value={currentUser.name}
-            onChange={(e) => setCurrentUser({ ...currentUser, name: e.target.value })}
+            variant="outlined"
+            value={currentUser.first_name}
+            onChange={(e) => setCurrentUser({ ...currentUser, first_name: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Last Name"
+            fullWidth
+            variant="outlined"
+            value={currentUser.last_name}
+            onChange={(e) => setCurrentUser({ ...currentUser, last_name: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Username"
+            fullWidth
+            variant="outlined"
+            value={currentUser.username}
+            onChange={(e) => setCurrentUser({ ...currentUser, username: e.target.value })}
           />
           <TextField
             margin="dense"
             label="Email"
             type="email"
             fullWidth
+            variant="outlined"
             value={currentUser.email}
             onChange={(e) => setCurrentUser({ ...currentUser, email: e.target.value })}
           />
@@ -178,6 +226,7 @@ const Users = () => {
               label="Password"
               type="password"
               fullWidth
+              variant="outlined"
               value={currentUser.password}
               onChange={(e) => setCurrentUser({ ...currentUser, password: e.target.value })}
             />
@@ -187,15 +236,14 @@ const Users = () => {
             label="Role"
             select
             fullWidth
+            variant="outlined"
             value={currentUser.role}
             onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}
-            SelectProps={{
-              native: true,
-            }}
           >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
+            <MenuItem value="employee">Employee</MenuItem>
+            <MenuItem value="manager">Manager</MenuItem>
+            <MenuItem value="hr">HR</MenuItem>
+            <MenuItem value="admin">Admin</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>
@@ -205,7 +253,7 @@ const Users = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

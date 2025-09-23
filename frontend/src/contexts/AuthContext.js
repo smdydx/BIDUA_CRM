@@ -33,10 +33,16 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+    if (storedToken && storedUser && storedUser !== 'undefined') {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
   }, []);
 
@@ -62,6 +68,7 @@ export const AuthProvider = ({ children }) => {
         toast.success('Login successful!');
         return true;
       }
+      return false;
     } catch (error) {
       console.error('Login error:', error);
       const errorMessage = error.response?.data?.detail || 'Login failed';
