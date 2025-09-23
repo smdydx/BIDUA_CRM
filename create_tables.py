@@ -3,15 +3,13 @@ from sqlalchemy import create_engine
 from models import Base
 import os
 
-# Get database URL
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Get database URL - use SQLite if DATABASE_URL not set
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./crm_hrms.db")
 
-if not DATABASE_URL:
-    print("DATABASE_URL environment variable not set!")
-    exit(1)
+print(f"Using database: {DATABASE_URL}")
 
 # Create engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {})
 
 # Create all tables
 def create_tables():
