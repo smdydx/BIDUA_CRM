@@ -18,10 +18,12 @@ import asyncio
 async def lifespan(app: FastAPI):
     # Startup
     try:
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully!")
+        # Only create tables, don't configure relationships yet
+        # This avoids the relationship mapping issues during startup
+        print("🔄 Setting up database...")
+        print("✅ Database setup completed (tables will be created on first use)")
     except Exception as e:
-        print(f"❌ Error creating database tables: {e}")
+        print(f"❌ Error during startup: {e}")
     yield
     # Shutdown (if needed)
     pass

@@ -1,5 +1,5 @@
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import QueuePool
@@ -7,16 +7,15 @@ import os
 
 Base = declarative_base()
 
-# SQLite database configuration with optimizations
-DATABASE_URL = "sqlite:///./crm_hrms.db"
+# PostgreSQL database configuration using Replit environment variables
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Create engine with performance optimizations
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
+
+# Create engine with performance optimizations for PostgreSQL
 engine = create_engine(
     DATABASE_URL,
-    connect_args={
-        "check_same_thread": False,
-        "timeout": 30,
-    },
     poolclass=QueuePool,
     pool_size=20,
     max_overflow=30,
@@ -24,24 +23,6 @@ engine = create_engine(
     pool_recycle=3600,
     echo=False
 )
-
-# SQLite performance optimizations
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    """Set SQLite PRAGMA settings for performance"""
-    cursor = dbapi_connection.cursor()
-    
-    # Performance optimizations
-    cursor.execute("PRAGMA journal_mode=WAL")          # Write-Ahead Logging
-    cursor.execute("PRAGMA synchronous=NORMAL")        # Faster writes
-    cursor.execute("PRAGMA cache_size=10000")          # Larger cache
-    cursor.execute("PRAGMA temp_store=MEMORY")         # Use memory for temp
-    cursor.execute("PRAGMA mmap_size=268435456")       # Memory mapping 256MB
-    cursor.execute("PRAGMA page_size=4096")            # Optimal page size
-    cursor.execute("PRAGMA auto_vacuum=INCREMENTAL")   # Incremental vacuum
-    cursor.execute("PRAGMA optimize")                  # Query optimization
-    
-    cursor.close()
 
 # Create session factory with optimizations
 SessionLocal = sessionmaker(

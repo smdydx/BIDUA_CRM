@@ -4,10 +4,10 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["libxcrypt"]
+packages = ["libiconv", "libxcrypt"]
 
 [workflows]
-runButton = "CRM HRMS Server"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -22,13 +22,13 @@ args = "FastAPI Server"
 name = "FastAPI Server"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main.py"
 waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[workflows.workflow]]
 name = "CRM HRMS Server"
@@ -44,7 +44,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 33803
+localPort = 45391
 externalPort = 3000
 
 [deployment]
