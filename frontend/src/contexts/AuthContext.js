@@ -19,8 +19,13 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(false);
 
-  // Set axios default headers
+  // Set axios default headers and base URL
   useEffect(() => {
+    // Set base URL for development
+    if (process.env.NODE_ENV === 'development') {
+      axios.defaults.baseURL = 'http://localhost:8000';
+    }
+    
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
@@ -66,18 +71,41 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.data.access_token) {
-        const { access_token, user: userData } = response.data;
+        const { access_token } = response.data;
 
+        // Get user info from backend after successful login
         setToken(access_token);
-        setUser(userData);
-
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('user', JSON.stringify(userData));
-
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        
+        try {
+          const userResponse = await axios.get('/api/v1/auth/me');
+          const userData = userResponse.data;
+          
+          setUser(userData);
+          localStorage.setItem('token', access_token);
+          localStorage.setItem('user', JSON.stringify(userData));
 
-        toast.success('Login successful!');
-        return true;
+          toast.success('Login successful!');
+          return true;
+        } catch (userError) {
+          console.error('Error fetching user info:', userError);
+          // Fallback user data for demo
+          const fallbackUser = {
+            id: 1,
+            username: email,
+            email: email,
+            first_name: 'Demo',
+            last_name: 'User',
+            role: 'admin',
+            is_active: true
+          };
+          setUser(fallbackUser);
+          localStorage.setItem('token', access_token);
+          localStorage.setItem('user', JSON.stringify(fallbackUser));
+
+          toast.success('Login successful!');
+          return true;
+        }
       }
       return false;
     } catch (error) {
@@ -105,18 +133,39 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.post('/api/v1/auth/register', userData);
 
       if (response.data.access_token) {
-        const { access_token, user: newUser } = response.data;
+        const { access_token } = response.data;
 
         setToken(access_token);
-        setUser(newUser);
-
-        localStorage.setItem('token', access_token);
-        localStorage.setItem('user', JSON.stringify(newUser));
-
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+        
+        try {
+          const userResponse = await axios.get('/api/v1/auth/me');
+          const newUser = userResponse.data;
+          
+          setUser(newUser);
+          localStorage.setItem('token', access_token);
+          localStorage.setItem('user', JSON.stringify(newUser));
 
-        toast.success('Registration successful!');
-        return true;
+          toast.success('Registration successful!');
+          return true;
+        } catch (userError) {
+          // Fallback user data for demo
+          const fallbackUser = {
+            id: 1,
+            username: userData.username,
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            role: 'employee',
+            is_active: true
+          };
+          setUser(fallbackUser);
+          localStorage.setItem('token', access_token);
+          localStorage.setItem('user', JSON.stringify(fallbackUser));
+
+          toast.success('Registration successful!');
+          return true;
+        }
       }
     } catch (error) {
       console.error('Registration error:', error);

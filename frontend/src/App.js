@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -59,7 +58,7 @@ const AppContent = () => {
       <CssBaseline />
       <Navbar onMenuClick={handleDrawerToggle} />
       <Sidebar mobileOpen={mobileOpen} onMobileClose={handleDrawerToggle} />
-      
+
       <Box
         component="main"
         sx={{
