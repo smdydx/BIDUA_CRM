@@ -88,19 +88,13 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await axios.post('/api/v1/auth/login', formData);
-      
-      if (response.data.access_token) {
-        login(response.data.access_token, response.data.user);
+      const success = await login(formData.email, formData.password);
+      if (success) {
         navigate('/dashboard');
       }
     } catch (error) {
       console.error('Login error:', error);
-      if (error.response?.data?.detail) {
-        setError(error.response.data.detail);
-      } else {
-        setError('Login failed. Please check your credentials.');
-      }
+      setError('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

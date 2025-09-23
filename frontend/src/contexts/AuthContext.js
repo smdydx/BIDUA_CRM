@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+// Create the AuthContext
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -103,7 +104,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     register,
-    loading
+    loading,
+    token
   };
 
   return (
@@ -112,3 +114,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// Export AuthContext as well for backward compatibility
+export { AuthContext };
