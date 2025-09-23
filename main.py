@@ -25,7 +25,11 @@ app.add_middleware(
 # Create database tables
 @app.on_event("startup")
 async def startup_event():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully!")
+    except Exception as e:
+        print(f"❌ Error creating database tables: {e}")
 
 @app.get("/")
 async def root():
@@ -48,8 +52,13 @@ async def root():
     }
 
 @app.get("/health")
-async def health_check():
-    return {"status": "healthy", "database": "connected"}
+async def health_check(db: Session = Depends(get_db)):
+    try:
+        # Test database connection
+        db.execute("SELECT 1")
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
 if __name__ == "__main__":
     uvicorn.run(
