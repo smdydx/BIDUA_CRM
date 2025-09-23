@@ -18,7 +18,8 @@ app = FastAPI(
     description="Comprehensive Customer Relationship Management and Human Resource Management System",
     version="2.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # Add CORS middleware first
@@ -36,14 +37,20 @@ add_all_middleware(app)
 # Security
 security = HTTPBearer(auto_error=False)
 
-# Create database tables
-@app.on_event("startup")
-async def startup_event():
+# Lifespan event handler
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     try:
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully!")
     except Exception as e:
         print(f"❌ Error creating database tables: {e}")
+    yield
+    # Shutdown (if needed)
+    pass
 
 @app.get("/")
 async def root():
