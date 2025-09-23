@@ -3,7 +3,7 @@ from typing import Optional, List, Union
 from datetime import datetime, date, time
 from decimal import Decimal
 import enum
-from models import (
+from app.models.models import (
     UserRole, LeadStatus, DealStage, EmployeeStatus, 
     LeaveStatus, AttendanceStatus, PayrollStatus,
     ProjectStatus, TaskStatus

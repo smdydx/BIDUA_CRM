@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import asyncio
-from database import Base
+from app.core.database import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -173,13 +173,13 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise SQLAlchemyError(f"Error soft deleting {self.model.__name__}: {str(e)}")
 
 # Import models for CRUD classes
-from models import (
+from app.models.models import (
     Users, Departments, Designations, Employees, Companies, Contacts,
     Leads, Deals, Activities, LeaveTypes, LeaveRequests, Attendance,
     Payroll, Projects, Tasks
 )
 
-from schemas import (
+from app.schemas.schemas import (
     UserCreate, UserUpdate, DepartmentCreate, DepartmentUpdate,
     DesignationCreate, DesignationUpdate, EmployeeCreate, EmployeeUpdate,
     CompanyCreate, CompanyUpdate, ContactCreate, ContactUpdate,

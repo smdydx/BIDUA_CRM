@@ -5,11 +5,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
-from database import get_db, engine
-from models import Base
-from middleware import add_all_middleware
-import crud
-import schemas
+from app.core.database import get_db, engine
+from app.models.models import Base
+from app.middleware.middleware import add_all_middleware
+import app.crud.crud as crud
+import app.schemas.schemas as schemas
 import uvicorn
 import asyncio
 
