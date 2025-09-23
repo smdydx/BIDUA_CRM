@@ -2,11 +2,15 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, func, select, text
+from sqlalchemy.orm import Session, selectinload, joinedload
+from sqlalchemy import and_, or_, func, select, text, desc, asc
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import asyncio
+import logging
 from app.core.database import Base
+from app.core.cache import cached, cache_invalidate, cache
+
+logger = logging.getLogger(__name__)
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -19,13 +23,16 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         self.model = model
 
+    @cached(ttl=300, prefix="get_by_id")
     async def get(self, db: Session, id: Any) -> Optional[ModelType]:
-        """Get a single record by ID"""
+        """Get a single record by ID with caching"""
         try:
             return db.query(self.model).filter(self.model.id == id).first()
         except Exception as e:
+            logger.error(f"Error fetching {self.model.__name__} by ID {id}: {str(e)}")
             raise SQLAlchemyError(f"Error fetching {self.model.__name__}: {str(e)}")
 
+    @cached(ttl=180, prefix="get_multi")
     async def get_multi(
         self, 
         db: Session, 
@@ -33,29 +40,60 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         skip: int = 0, 
         limit: int = 100,
         filters: Optional[Dict[str, Any]] = None,
-        search: Optional[str] = None
+        search: Optional[str] = None,
+        order_by: Optional[str] = None
     ) -> List[ModelType]:
-        """Get multiple records with optional filtering and pagination"""
+        """Get multiple records with optimized filtering, pagination and caching"""
         try:
             query = db.query(self.model)
             
-            # Apply filters
+            # Apply filters with optimized conditions
             if filters:
                 for key, value in filters.items():
                     if hasattr(self.model, key) and value is not None:
+                        column = getattr(self.model, key)
                         if isinstance(value, str) and '%' in value:
-                            query = query.filter(getattr(self.model, key).like(value))
+                            query = query.filter(column.ilike(value))  # Case insensitive
+                        elif isinstance(value, list):
+                            query = query.filter(column.in_(value))
                         else:
-                            query = query.filter(getattr(self.model, key) == value)
+                            query = query.filter(column == value)
             
-            # Apply search if supported
-            if search and hasattr(self.model, 'name'):
-                query = query.filter(self.model.name.contains(search))
-            elif search and hasattr(self.model, 'title'):
-                query = query.filter(self.model.title.contains(search))
+            # Apply search with better performance
+            if search:
+                search_term = f"%{search.lower()}%"
+                search_conditions = []
+                
+                # Common searchable fields
+                searchable_fields = ['name', 'title', 'first_name', 'last_name', 'email', 'description']
+                for field in searchable_fields:
+                    if hasattr(self.model, field):
+                        column = getattr(self.model, field)
+                        search_conditions.append(column.ilike(search_term))
+                
+                if search_conditions:
+                    query = query.filter(or_(*search_conditions))
+            
+            # Apply ordering
+            if order_by:
+                if order_by.startswith('-'):
+                    field = order_by[1:]
+                    if hasattr(self.model, field):
+                        query = query.order_by(desc(getattr(self.model, field)))
+                else:
+                    if hasattr(self.model, order_by):
+                        query = query.order_by(asc(getattr(self.model, order_by)))
+            else:
+                # Default ordering by ID descending for better performance
+                query = query.order_by(desc(self.model.id))
+            
+            # Limit should not exceed 100 for performance
+            limit = min(limit, 100)
             
             return query.offset(skip).limit(limit).all()
+            
         except Exception as e:
+            logger.error(f"Error fetching {self.model.__name__} list: {str(e)}")
             raise SQLAlchemyError(f"Error fetching {self.model.__name__} list: {str(e)}")
 
     async def get_count(
@@ -87,8 +125,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         except Exception as e:
             raise SQLAlchemyError(f"Error counting {self.model.__name__}: {str(e)}")
 
+    @cache_invalidate(pattern=f"*{__name__.split('.')[-1]}*")
     async def create(self, db: Session, *, obj_in: CreateSchemaType, created_by_id: Optional[int] = None) -> ModelType:
-        """Create a new record"""
+        """Create a new record with cache invalidation"""
         try:
             obj_in_data = jsonable_encoder(obj_in)
             
@@ -100,12 +139,20 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db.add(db_obj)
             db.commit()
             db.refresh(db_obj)
+            
+            # Invalidate related caches
+            await cache.clear_pattern(f"*{self.model.__name__.lower()}*")
+            
+            logger.info(f"Created {self.model.__name__} with ID: {db_obj.id}")
             return db_obj
+            
         except IntegrityError as e:
             db.rollback()
+            logger.error(f"Integrity error creating {self.model.__name__}: {str(e)}")
             raise ValueError(f"Data integrity error: {str(e)}")
         except Exception as e:
             db.rollback()
+            logger.error(f"Error creating {self.model.__name__}: {str(e)}")
             raise SQLAlchemyError(f"Error creating {self.model.__name__}: {str(e)}")
 
     async def update(

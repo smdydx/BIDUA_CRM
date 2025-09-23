@@ -15,62 +15,97 @@ import json
 from collections import defaultdict, deque
 import threading
 
-# Optional Redis import for production use
+# Redis and caching imports
 try:
     import redis
     REDIS_AVAILABLE = True
-except ImportError:
+    redis_client = redis.Redis(host='localhost', port=6379, db=1, decode_responses=True)
+    redis_client.ping()
+    logger.info("✅ Redis connected for rate limiting")
+except Exception:
     REDIS_AVAILABLE = False
+    redis_client = None
+    logger.warning("⚠️ Redis not available, using in-memory rate limiting")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# In-memory rate limiting storage (replace with Redis for production)
+# In-memory rate limiting storage (fallback when Redis unavailable)
 rate_limit_storage = defaultdict(lambda: defaultdict(deque))
 rate_limit_lock = threading.Lock()
 
 class PerformanceMiddleware(BaseHTTPMiddleware):
-    """Middleware to track performance metrics and add response headers"""
+    """Advanced performance monitoring for high concurrency"""
     
     def __init__(self, app, enable_profiling: bool = True):
         super().__init__(app)
         self.enable_profiling = enable_profiling
-        self.request_times = deque(maxlen=1000)  # Keep last 1000 request times
+        self.request_times = deque(maxlen=10000)  # Keep last 10000 request times
+        self.active_requests = 0
+        self.total_requests = 0
+        self.slow_requests = deque(maxlen=100)  # Track slow requests
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
+        self.active_requests += 1
+        self.total_requests += 1
         
         # Add request start time to request state
         request.state.start_time = start_time
+        request.state.request_id = f"req_{self.total_requests}"
         
         try:
             response = await call_next(request)
         except Exception as e:
-            # Log the error and return a proper error response
-            logger.error(f"Request failed: {str(e)}")
+            # Log the error with request context
+            logger.error(f"Request {request.state.request_id} failed: {str(e)}")
+            self.active_requests -= 1
             return JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                content={"error": "Internal server error", "detail": str(e)}
+                content={"error": "Internal server error", "request_id": request.state.request_id}
             )
+        finally:
+            self.active_requests -= 1
         
         # Calculate processing time
         process_time = time.time() - start_time
         self.request_times.append(process_time)
         
-        # Add performance headers
-        response.headers["X-Process-Time"] = str(process_time)
+        # Track slow requests for analysis
+        if process_time > 0.5:  # Requests taking more than 500ms
+            self.slow_requests.append({
+                "url": str(request.url),
+                "method": request.method,
+                "time": process_time,
+                "timestamp": start_time
+            })
+        
+        # Add comprehensive performance headers
+        response.headers["X-Process-Time"] = f"{process_time:.4f}"
+        response.headers["X-Request-ID"] = request.state.request_id
+        response.headers["X-Active-Requests"] = str(self.active_requests)
         response.headers["X-Timestamp"] = str(int(time.time()))
         
-        # Add cache control headers for optimization
+        # Add rate limit headers if available
+        if hasattr(request.state, 'rate_limit_headers'):
+            for key, value in request.state.rate_limit_headers.items():
+                response.headers[key] = value
+        
+        # Optimized cache control
         if request.method == "GET":
-            response.headers["Cache-Control"] = "public, max-age=300"  # 5 minutes cache
+            if "api/v1" in str(request.url):
+                response.headers["Cache-Control"] = "public, max-age=60"  # API cache
+            else:
+                response.headers["Cache-Control"] = "public, max-age=300"  # Static cache
         else:
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         
-        # Log slow requests
-        if process_time > 1.0:  # Log requests taking more than 1 second
-            logger.warning(f"Slow request: {request.method} {request.url} took {process_time:.2f}s")
+        # Performance logging
+        if process_time > 1.0:
+            logger.warning(f"Slow request {request.state.request_id}: {request.method} {request.url} took {process_time:.3f}s")
+        elif process_time > 0.1:
+            logger.info(f"Request {request.state.request_id}: {process_time:.3f}s")
         
         return response
 
