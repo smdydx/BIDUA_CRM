@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 import uvicorn
@@ -167,6 +169,24 @@ async def get_dashboard_analytics(current_user: dict = Depends(get_current_user)
             status_code=500,
             detail=f"Failed to fetch analytics: {str(e)}"
         )
+
+# Static files for production deployment
+# Check if we have the built React app
+build_dir = os.path.join(os.path.dirname(__file__), "frontend", "build")
+if os.path.exists(build_dir):
+    # Mount static files
+    app.mount("/static", StaticFiles(directory=os.path.join(build_dir, "static")), name="static")
+    
+    # Serve React app for all non-API routes
+    @app.get("/{catch_all:path}")
+    async def serve_react_app(catch_all: str):
+        """Serve React app for all non-API routes in production"""
+        # Don't serve React app for API routes
+        if catch_all.startswith("api/") or catch_all.startswith("docs") or catch_all.startswith("openapi.json"):
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+        
+        # Serve index.html for all other routes
+        return FileResponse(os.path.join(build_dir, "index.html"))
 
 # Create tables on startup
 @app.on_event("startup")
