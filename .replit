@@ -61,6 +61,15 @@ args = "python main.py"
 task = "shell.exec"
 args = "cd frontend && npm install && npm start"
 
+[[workflows.workflow]]
+name = "Frontend React Server"
+author = 47924775
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm install && PORT=3001 npm start"
+
 [[ports]]
 localPort = 3000
 externalPort = 3000

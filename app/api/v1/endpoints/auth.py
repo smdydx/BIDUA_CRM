@@ -45,12 +45,24 @@ def get_pagination_params(page: int = 1, size: int = 20):
 
 @router.post("/login")
 async def login_user(
-    login_data: dict,
+    login_data: schemas.UserLogin,
     db: Session = Depends(get_db)
 ):
     """User login endpoint"""
-    # TODO: Implement proper authentication with password validation
-    return {"access_token": "mock_jwt_token", "token_type": "bearer"}
+    try:
+        # For demo purposes, return success for any valid email/password
+        if login_data.email and login_data.password:
+            return {"access_token": "demo_jwt_token", "token_type": "bearer"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Login failed: {str(e)}"
+        )
 
 @router.post("/register")
 async def register_user(

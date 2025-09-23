@@ -48,13 +48,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
+      const loginData = {
+        email: email,
+        password: password
+      };
 
-      const response = await axios.post('/api/v1/auth/login', formData, {
+      const response = await axios.post('/api/v1/auth/login', loginData, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
       });
 

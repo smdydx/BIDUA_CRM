@@ -447,3 +447,7 @@ class TokenData(BaseSchema):
 class LoginRequest(BaseSchema):
     username: str
     password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
