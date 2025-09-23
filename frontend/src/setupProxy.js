@@ -7,9 +7,14 @@ module.exports = function(app) {
     createProxyMiddleware({
       target: 'http://localhost:8000',
       changeOrigin: true,
-      pathRewrite: {
-        '^/api': '/api', // Keep the /api prefix
+      secure: false,
+      logLevel: 'debug',
+      onError: (err, req, res) => {
+        console.error('Proxy error:', err);
       },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log(`Proxying ${req.method} ${req.path} to backend`);
+      }
     })
   );
 };

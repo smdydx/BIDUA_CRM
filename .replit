@@ -84,6 +84,19 @@ args = "python main.py"
 task = "shell.exec"
 args = "cd frontend && npm install && BROWSER=none npm start"
 
+[[workflows.workflow]]
+name = "Full Stack Development"
+author = 47927833
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm start"
+
 [[ports]]
 localPort = 3000
 externalPort = 3000

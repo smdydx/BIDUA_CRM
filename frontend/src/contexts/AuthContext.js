@@ -17,7 +17,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Set axios default headers and base URL
   useEffect(() => {
@@ -35,31 +35,36 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is authenticated on app load
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const checkAuth = () => {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        if (parsedUser && typeof parsedUser === 'object') {
-          setToken(storedToken);
-          setUser(parsedUser);
-          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        } else {
-          // Clear invalid data
+      if (storedToken && storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if (parsedUser && typeof parsedUser === 'object') {
+            setToken(storedToken);
+            setUser(parsedUser);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          } else {
+            // Clear invalid data
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        } catch (error) {
+          console.error('Error parsing stored user data:', error);
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
-      } catch (error) {
-        console.error('Error parsing stored user data:', error);
+      } else if (storedUser === 'undefined' || storedUser === 'null') {
+        // Clean up invalid data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
-    } else if (storedUser === 'undefined' || storedUser === 'null') {
-      // Clean up invalid data
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    }
+      setLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email, password) => {
