@@ -187,20 +187,27 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ Error creating tables: {e}")
 
-    import socket
-
-    # Check if port 5000 is available
-    port = 5000
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('127.0.0.1', port))
-    sock.close()
-
-    if result == 0:
-        port = 5001  # Use alternative port if 5000 is busy
+    # In development, run backend on port 8000 (React proxy will forward API calls)
+    # In production, run on port 5000 and serve both API and static files
+    
+    # Check if we're in development (when React dev server might be running)
+    is_development = os.getenv("REPLIT_DEV_DOMAIN") or True  # Assume dev mode in Replit
+    
+    if is_development:
+        # Development mode: Backend on port 8000, React dev server on port 5000
+        port = 8000
+        host = "localhost"  # Backend only needs localhost in dev
+        print(f"🔧 Starting FastAPI backend server in development mode on {host}:{port}")
+        print("📝 Note: React dev server should run on port 5000 with proxy to this backend")
+    else:
+        # Production mode: Single server on port 5000
+        port = 5000
+        host = "0.0.0.0"
+        print(f"🚀 Starting FastAPI server in production mode on {host}:{port}")
 
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
+        host=host,
         port=port,
         reload=True,
         log_level="info"
