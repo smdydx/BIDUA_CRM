@@ -46,7 +46,7 @@ mode = "parallel"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npm start"
+args = "cd frontend && npm install && npm start"
 
 [[workflows.workflow]]
 name = "Full Stack App"
@@ -55,7 +55,11 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python start_servers.py"
+args = "python main.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm install && npm start"
 
 [[ports]]
 localPort = 5000
