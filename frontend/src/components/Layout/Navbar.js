@@ -1,5 +1,4 @@
-
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -25,10 +24,10 @@ import {
   Person,
   Mail
 } from '@mui/icons-material';
-import { AuthContext } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
-const Navbar = ({ onMenuClick, drawerOpen }) => {
-  const { user, logout } = useContext(AuthContext);
+const Navbar = ({ onMenuClick }) => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationAnchor, setNotificationAnchor] = useState(null);
@@ -37,11 +36,11 @@ const Navbar = ({ onMenuClick, drawerOpen }) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleMenuClose = () => {
+  const handleProfileMenuClose = () => {
     setAnchorEl(null);
   };
 
-  const handleNotificationClick = (event) => {
+  const handleNotificationOpen = (event) => {
     setNotificationAnchor(event.currentTarget);
   };
 
@@ -52,282 +51,216 @@ const Navbar = ({ onMenuClick, drawerOpen }) => {
   const handleLogout = () => {
     logout();
     navigate('/login');
-    handleMenuClose();
+    handleProfileMenuClose();
   };
 
-  const notifications = [
-    {
-      id: 1,
-      title: 'New Lead Assigned',
-      message: 'Acme Corp lead has been assigned to you',
-      time: '5 min ago',
-      unread: true
-    },
-    {
-      id: 2,
-      title: 'Project Update',
-      message: 'Alpha project milestone completed',
-      time: '1 hour ago',
-      unread: true
-    },
-    {
-      id: 3,
-      title: 'Meeting Reminder',
-      message: 'Team meeting at 3:00 PM today',
-      time: '2 hours ago',
-      unread: false
-    }
-  ];
+  const handleProfile = () => {
+    navigate('/profile');
+    handleProfileMenuClose();
+  };
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const handleSettings = () => {
+    navigate('/settings');
+    handleProfileMenuClose();
+  };
 
   return (
-    <AppBar
-      position="fixed"
-      sx={{
-        background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-        boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-      }}
-    >
-      <Toolbar sx={{ px: 3 }}>
-        <IconButton
-          color="inherit"
-          aria-label="toggle drawer"
-          onClick={onMenuClick}
-          edge="start"
-          sx={{ 
-            mr: 2,
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.1)'
-            }
-          }}
-        >
-          <MenuIcon />
-        </IconButton>
+    <>
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
+          {/* Left side */}
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={onMenuClick}
+              sx={{ mr: 2, display: { md: 'none' } }}
+            >
+              <MenuIcon />
+            </IconButton>
 
-        <Typography 
-          variant="h6" 
-          noWrap 
-          component="div" 
-          sx={{ 
-            flexGrow: 1,
-            fontWeight: 'bold',
-            letterSpacing: '0.5px'
-          }}
-        >
-          BIDUA ERP System
-        </Typography>
-
-        {/* Current Time */}
-        <Box sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            {new Date().toLocaleString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </Typography>
-        </Box>
-
-        {/* Notifications */}
-        <IconButton
-          size="large"
-          aria-label={`show ${unreadCount} new notifications`}
-          color="inherit"
-          onClick={handleNotificationClick}
-          sx={{
-            mr: 1,
-            '&:hover': {
-              bgcolor: 'rgba(255,255,255,0.1)'
-            }
-          }}
-        >
-          <Badge badgeContent={unreadCount} color="error">
-            <Notifications />
-          </Badge>
-        </IconButton>
-
-        {/* User Profile */}
-        <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
-          <Box sx={{ mr: 2, textAlign: 'right', display: { xs: 'none', md: 'block' } }}>
-            <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-              {user?.first_name || 'Admin'} {user?.last_name || 'User'}
-            </Typography>
-            <Chip
-              label={user?.role || 'Administrator'}
-              size="small"
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
               sx={{
-                bgcolor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontSize: '0.7rem',
-                height: 20
-              }}
-            />
-          </Box>
-          
-          <IconButton
-            size="large"
-            edge="end"
-            aria-label="account of current user"
-            aria-controls="primary-search-account-menu"
-            aria-haspopup="true"
-            onClick={handleProfileMenuOpen}
-            color="inherit"
-            sx={{
-              '&:hover': {
-                bgcolor: 'rgba(255,255,255,0.1)'
-              }
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 32,
-                height: 32,
-                bgcolor: 'rgba(255,255,255,0.2)',
-                border: '2px solid rgba(255,255,255,0.3)'
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                background: 'linear-gradient(45deg, #fff, #e3f2fd)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
               }}
             >
-              {user?.first_name?.[0] || 'A'}
-            </Avatar>
-          </IconButton>
+              CRM + HRMS Pro
+            </Typography>
+          </Box>
+
+          {/* Right side */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* User Role Chip */}
+            <Chip
+              label={user?.role?.toUpperCase() || 'USER'}
+              size="small"
+              sx={{
+                background: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                fontWeight: 600,
+                display: { xs: 'none', sm: 'flex' }
+              }}
+            />
+
+            {/* Notifications */}
+            <IconButton
+              color="inherit"
+              onClick={handleNotificationOpen}
+              sx={{
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              <Badge badgeContent={3} color="error">
+                <Notifications />
+              </Badge>
+            </IconButton>
+
+            {/* User Profile */}
+            <IconButton
+              onClick={handleProfileMenuOpen}
+              sx={{
+                p: 0,
+                ml: 1,
+                '&:hover': {
+                  transform: 'scale(1.05)'
+                }
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 40,
+                  height: 40,
+                  background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                  fontWeight: 600
+                }}
+              >
+                {user?.first_name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+              </Avatar>
+            </IconButton>
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      {/* Profile Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleProfileMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1.5,
+            minWidth: 220,
+            borderRadius: 2,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #eee' }}>
+          <Typography variant="subtitle1" fontWeight={600}>
+            {user?.first_name} {user?.last_name}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {user?.email}
+          </Typography>
+          <Chip
+            label={user?.role}
+            size="small"
+            color="primary"
+            sx={{ mt: 0.5 }}
+          />
         </Box>
 
-        {/* Profile Menu */}
-        <Menu
-          anchorEl={anchorEl}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          PaperProps={{
-            elevation: 8,
-            sx: {
-              mt: 1,
-              minWidth: 200,
-              borderRadius: 2,
-              '& .MuiMenuItem-root': {
-                px: 2,
-                py: 1.5,
-              },
-            },
-          }}
-        >
-          <Box sx={{ px: 2, py: 1 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-              {user?.first_name || 'Admin'} {user?.last_name || 'User'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {user?.email || 'admin@company.com'}
-            </Typography>
-          </Box>
-          <Divider />
-          
-          <MenuItem onClick={handleMenuClose}>
-            <ListItemIcon>
-              <Person fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>My Profile</ListItemText>
-          </MenuItem>
-          
-          <MenuItem onClick={handleMenuClose}>
-            <ListItemIcon>
-              <Settings fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Settings</ListItemText>
-          </MenuItem>
-          
-          <Divider />
-          
-          <MenuItem onClick={handleLogout}>
-            <ListItemIcon>
-              <Logout fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Logout</ListItemText>
-          </MenuItem>
-        </Menu>
+        <MenuItem onClick={handleProfile}>
+          <ListItemIcon>
+            <Person fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Profile</ListItemText>
+        </MenuItem>
 
-        {/* Notification Menu */}
-        <Menu
-          anchorEl={notificationAnchor}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'right',
-          }}
-          keepMounted
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'right',
-          }}
-          open={Boolean(notificationAnchor)}
-          onClose={handleNotificationClose}
-          PaperProps={{
-            elevation: 8,
-            sx: {
-              mt: 1,
-              minWidth: 300,
-              maxWidth: 350,
-              borderRadius: 2,
-            },
-          }}
-        >
-          <Box sx={{ px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-              Notifications
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              You have {unreadCount} unread notifications
-            </Typography>
-          </Box>
-          
-          {notifications.map((notification) => (
-            <MenuItem key={notification.id} onClick={handleNotificationClose}>
-              <Box sx={{ width: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: notification.unread ? 'bold' : 'normal' }}>
-                    {notification.title}
-                  </Typography>
-                  {notification.unread && (
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        bgcolor: 'error.main',
-                        borderRadius: '50%',
-                        ml: 1,
-                        mt: 0.5
-                      }}
-                    />
-                  )}
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {notification.message}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {notification.time}
-                </Typography>
-              </Box>
-            </MenuItem>
-          ))}
-          
-          <Divider />
-          <MenuItem onClick={handleNotificationClose}>
-            <Typography variant="body2" color="primary" sx={{ width: '100%', textAlign: 'center' }}>
-              View All Notifications
-            </Typography>
-          </MenuItem>
-        </Menu>
-      </Toolbar>
-    </AppBar>
+        <MenuItem onClick={handleSettings}>
+          <ListItemIcon>
+            <Settings fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Settings</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem onClick={handleLogout}>
+          <ListItemIcon>
+            <Logout fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Logout</ListItemText>
+        </MenuItem>
+      </Menu>
+
+      {/* Notifications Menu */}
+      <Menu
+        anchorEl={notificationAnchor}
+        open={Boolean(notificationAnchor)}
+        onClose={handleNotificationClose}
+        PaperProps={{
+          sx: {
+            mt: 1.5,
+            minWidth: 300,
+            maxHeight: 400,
+            borderRadius: 2
+          }
+        }}
+      >
+        <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid #eee' }}>
+          <Typography variant="h6">Notifications</Typography>
+        </Box>
+
+        <MenuItem>
+          <ListItemIcon>
+            <Mail fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="New lead assigned"
+            secondary="2 minutes ago"
+          />
+        </MenuItem>
+
+        <MenuItem>
+          <ListItemIcon>
+            <Person fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Employee leave request"
+            secondary="5 minutes ago"
+          />
+        </MenuItem>
+
+        <MenuItem>
+          <ListItemIcon>
+            <Settings fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="System update completed"
+            secondary="1 hour ago"
+          />
+        </MenuItem>
+      </Menu>
+    </>
   );
 };
 

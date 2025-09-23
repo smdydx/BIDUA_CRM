@@ -1,17 +1,42 @@
+
 #!/bin/bash
 
-# Start the FastAPI backend on port 8000
-echo "🚀 Starting FastAPI backend on port 8000..."
+echo "🚀 Starting CRM + HRMS Pro Application..."
+
+# Install frontend dependencies if needed
+if [ ! -d "frontend/node_modules" ]; then
+    echo "📦 Installing frontend dependencies..."
+    cd frontend && npm install && cd ..
+fi
+
+# Create database tables
+echo "🗄️ Setting up database..."
+python create_tables.py
+
+# Create admin user
+echo "👤 Creating admin user..."
+python create_admin_user.py
+
+# Start backend server in background
+echo "🔧 Starting backend server..."
 python main.py &
 BACKEND_PID=$!
 
 # Wait a moment for backend to start
 sleep 3
 
-# Start the React frontend on port 5000
-echo "🚀 Starting React frontend on port 5000..."
-cd frontend
-npm start
+# Start frontend server
+echo "🎨 Starting frontend server..."
+cd frontend && BROWSER=none npm start &
+FRONTEND_PID=$!
 
-# If the frontend stops, kill the backend too
-kill $BACKEND_PID 2>/dev/null
+echo "✅ Application started successfully!"
+echo "🌐 Frontend: http://localhost:3000"
+echo "🔧 Backend API: http://localhost:5000"
+echo ""
+echo "📋 Demo Login Credentials:"
+echo "📧 Email: admin@company.com"
+echo "🔑 Password: admin123"
+
+# Wait for both processes
+wait $BACKEND_PID $FRONTEND_PID

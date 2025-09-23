@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -33,7 +32,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    
+
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
@@ -48,18 +47,18 @@ export const AuthProvider = ({ children }) => {
         username: email,
         password: password
       });
-      
+
       if (response.data.access_token) {
         const { access_token, user: userData } = response.data;
-        
+
         setToken(access_token);
         setUser(userData);
-        
+
         localStorage.setItem('token', access_token);
         localStorage.setItem('user', JSON.stringify(userData));
-        
+
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        
+
         toast.success('Login successful!');
         return true;
       }
@@ -86,18 +85,18 @@ export const AuthProvider = ({ children }) => {
     setLoading(true);
     try {
       const response = await axios.post('/api/v1/auth/register', userData);
-      
+
       if (response.data.access_token) {
         const { access_token, user: newUser } = response.data;
-        
+
         setToken(access_token);
         setUser(newUser);
-        
+
         localStorage.setItem('token', access_token);
         localStorage.setItem('user', JSON.stringify(newUser));
-        
+
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        
+
         toast.success('Registration successful!');
         return true;
       }
@@ -128,4 +127,6 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export default AuthContext;
+// Export AuthContext as well for backward compatibility
+export { AuthContext };
+export default AuthProvider;
