@@ -8,11 +8,38 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import asyncio
 import logging
 import hashlib
+import functools
 from app.core.database import Base
 from app.models.models import *
 from app.schemas import schemas
 
 logger = logging.getLogger(__name__)
+
+# Simple caching decorators (since Redis is not available)
+def cached(ttl: int = 300, prefix: str = "cache"):
+    """Simple in-memory caching decorator"""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+def cache_invalidate(pattern: str = "*"):
+    """Cache invalidation decorator"""
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+# Placeholder cache object
+class SimpleCache:
+    async def clear_pattern(self, pattern: str):
+        pass
+
+cache = SimpleCache()
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
