@@ -1,5 +1,6 @@
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Decimal, Date, Time, Enum, CheckConstraint, UniqueConstraint, Index
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Date, Time, Enum, CheckConstraint, UniqueConstraint, Index
+from sqlalchemy.sql.sqltypes import Numeric
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
@@ -74,23 +75,6 @@ class TaskStatus(enum.Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
-class PayrollStatus(enum.Enum):
-    DRAFT = "draft"
-    PROCESSED = "processed"
-    PAID = "paid"
-
-class TaskStatus(enum.Enum):
-    TODO = "todo"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-
-class ProjectStatus(enum.Enum):
-    PLANNING = "planning"
-    ACTIVE = "active"
-    ON_HOLD = "on_hold"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
 
 # Core User Management
 class Users(Base):
@@ -235,7 +219,7 @@ class Employees(Base):
     work_location = Column(String(100))
     shift_timing = Column(String(50))
     status = Column(Enum(EmployeeStatus), default=EmployeeStatus.ACTIVE)
-    salary = Column(Decimal(10, 2))
+    salary = Column(Numeric(10, 2))
     termination_date = Column(Date)
     termination_reason = Column(Text)
     
@@ -357,7 +341,7 @@ class Companies(Base):
     state = Column(String(100))
     country = Column(String(100))
     postal_code = Column(String(20))
-    annual_revenue = Column(Decimal(15, 2))
+    annual_revenue = Column(Numeric(15, 2))
     employee_count = Column(Integer)
     description = Column(Text)
     logo_url = Column(String(500))
@@ -473,7 +457,7 @@ class Leads(Base):
     contact_id = Column(Integer, ForeignKey("contacts.id"))
     source = Column(String(100))  # Website, Email, Phone, Referral, etc.
     status = Column(Enum(LeadStatus), default=LeadStatus.NEW)
-    estimated_value = Column(Decimal(12, 2))
+    estimated_value = Column(Numeric(12, 2))
     probability = Column(Integer, default=0)  # 0-100%
     expected_close_date = Column(Date)
     
@@ -505,7 +489,7 @@ class Deals(Base):
     lead_id = Column(Integer, ForeignKey("leads.id"))
     
     stage = Column(Enum(DealStage), default=DealStage.PROSPECTING)
-    value = Column(Decimal(12, 2), nullable=False)
+    value = Column(Numeric(12, 2), nullable=False)
     probability = Column(Integer, default=0)  # 0-100%
     expected_close_date = Column(Date)
     actual_close_date = Column(Date)
@@ -675,7 +659,7 @@ class Attendance(Base):
     check_in_time = Column(Time)
     check_out_time = Column(Time)
     break_duration_minutes = Column(Integer, default=0)
-    total_hours = Column(Decimal(4, 2))
+    total_hours = Column(Numeric(4, 2))
     
     status = Column(Enum(AttendanceStatus), default=AttendanceStatus.PRESENT)
     notes = Column(Text)
@@ -698,19 +682,19 @@ class Payroll(Base):
     pay_period_end = Column(Date, nullable=False)
     
     # Salary components
-    basic_salary = Column(Decimal(10, 2), nullable=False)
-    allowances = Column(Decimal(10, 2), default=0)
-    overtime_amount = Column(Decimal(10, 2), default=0)
-    bonus = Column(Decimal(10, 2), default=0)
+    basic_salary = Column(Numeric(10, 2), nullable=False)
+    allowances = Column(Numeric(10, 2), default=0)
+    overtime_amount = Column(Numeric(10, 2), default=0)
+    bonus = Column(Numeric(10, 2), default=0)
     
     # Deductions
-    tax_deduction = Column(Decimal(10, 2), default=0)
-    insurance_deduction = Column(Decimal(10, 2), default=0)
-    other_deductions = Column(Decimal(10, 2), default=0)
+    tax_deduction = Column(Numeric(10, 2), default=0)
+    insurance_deduction = Column(Numeric(10, 2), default=0)
+    other_deductions = Column(Numeric(10, 2), default=0)
     
     # Totals
-    gross_pay = Column(Decimal(10, 2), nullable=False)
-    net_pay = Column(Decimal(10, 2), nullable=False)
+    gross_pay = Column(Numeric(10, 2), nullable=False)
+    net_pay = Column(Numeric(10, 2), nullable=False)
     
     status = Column(Enum(PayrollStatus), default=PayrollStatus.DRAFT)
     processed_by_id = Column(Integer, ForeignKey("users.id"))
@@ -795,9 +779,9 @@ class Products(Base):
     category_id = Column(Integer, ForeignKey("product_categories.id"))
     
     # Pricing
-    cost_price = Column(Decimal(10, 2))
-    selling_price = Column(Decimal(10, 2), nullable=False)
-    tax_rate = Column(Decimal(5, 2), default=0)
+    cost_price = Column(Numeric(10, 2))
+    selling_price = Column(Numeric(10, 2), nullable=False)
+    tax_rate = Column(Numeric(5, 2), default=0)
     
     # Inventory
     stock_quantity = Column(Integer, default=0)
@@ -808,7 +792,7 @@ class Products(Base):
     brand = Column(String(100))
     model = Column(String(100))
     barcode = Column(String(50))
-    weight = Column(Decimal(8, 3))
+    weight = Column(Numeric(8, 3))
     dimensions = Column(String(100))  # LxWxH format
     
     is_active = Column(Boolean, default=True)
@@ -834,11 +818,11 @@ class Invoices(Base):
     due_date = Column(Date, nullable=False)
     
     # Amounts
-    subtotal = Column(Decimal(12, 2), nullable=False)
-    tax_amount = Column(Decimal(10, 2), default=0)
-    discount_amount = Column(Decimal(10, 2), default=0)
-    total_amount = Column(Decimal(12, 2), nullable=False)
-    paid_amount = Column(Decimal(12, 2), default=0)
+    subtotal = Column(Numeric(12, 2), nullable=False)
+    tax_amount = Column(Numeric(10, 2), default=0)
+    discount_amount = Column(Numeric(10, 2), default=0)
+    total_amount = Column(Numeric(12, 2), nullable=False)
+    paid_amount = Column(Numeric(12, 2), default=0)
     
     # Status and terms
     status = Column(String(20), default="draft")  # draft, sent, paid, overdue, cancelled
@@ -863,9 +847,9 @@ class InvoiceItems(Base):
     product_id = Column(Integer, ForeignKey("products.id"))
     
     description = Column(String(500), nullable=False)
-    quantity = Column(Decimal(10, 3), nullable=False)
-    unit_price = Column(Decimal(10, 2), nullable=False)
-    total_price = Column(Decimal(12, 2), nullable=False)
+    quantity = Column(Numeric(10, 3), nullable=False)
+    unit_price = Column(Numeric(10, 2), nullable=False)
+    total_price = Column(Numeric(12, 2), nullable=False)
     
     # Relationships
     invoice = relationship("Invoices")
@@ -897,7 +881,7 @@ class Projects(Base):
     
     start_date = Column(Date)
     end_date = Column(Date)
-    budget = Column(Decimal(12, 2))
+    budget = Column(Numeric(12, 2))
     status = Column(Enum(ProjectStatus), default=ProjectStatus.PLANNING)
     priority = Column(String(20), default="medium")  # low, medium, high, urgent
     
@@ -924,8 +908,8 @@ class Tasks(Base):
     # Scheduling
     start_date = Column(Date)
     due_date = Column(Date)
-    estimated_hours = Column(Decimal(5, 2))
-    actual_hours = Column(Decimal(5, 2))
+    estimated_hours = Column(Numeric(5, 2))
+    actual_hours = Column(Numeric(5, 2))
     
     # Status and priority
     status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
@@ -945,31 +929,6 @@ class Tasks(Base):
     parent_task = relationship("Tasks", remote_side=[id])
     subtasks = relationship("Tasks", back_populates="parent_task")
 
-class Tasks(Base):
-    __tablename__ = "tasks"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(200), nullable=False)
-    description = Column(Text)
-    project_id = Column(Integer, ForeignKey("projects.id"))
-    assigned_to_id = Column(Integer, ForeignKey("users.id"))
-    created_by_id = Column(Integer, ForeignKey("users.id"))
-    
-    start_date = Column(Date)
-    due_date = Column(Date)
-    completed_date = Column(Date)
-    status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
-    priority = Column(String(20), default="medium")
-    estimated_hours = Column(Decimal(5, 2))
-    actual_hours = Column(Decimal(5, 2))
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    project = relationship("Projects", back_populates="tasks")
-    assigned_to = relationship("Users", foreign_keys=[assigned_to_id])
-    created_by = relationship("Users", foreign_keys=[created_by_id])
 
 # Document Management
 class Documents(Base):
@@ -1049,7 +1008,7 @@ class TrainingPrograms(Base):
     end_date = Column(Date)
     duration_hours = Column(Integer)
     max_participants = Column(Integer)
-    cost_per_participant = Column(Decimal(10, 2))
+    cost_per_participant = Column(Numeric(10, 2))
     
     is_mandatory = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
@@ -1099,7 +1058,7 @@ class Expenses(Base):
     
     title = Column(String(200), nullable=False)
     description = Column(Text)
-    amount = Column(Decimal(10, 2), nullable=False)
+    amount = Column(Numeric(10, 2), nullable=False)
     expense_date = Column(Date, nullable=False)
     
     receipt_url = Column(String(500))
@@ -1151,8 +1110,8 @@ class SalesTargets(Base):
     target_month = Column(Integer)  # For monthly targets
     target_quarter = Column(Integer)  # For quarterly targets
     
-    target_amount = Column(Decimal(12, 2), nullable=False)
-    achieved_amount = Column(Decimal(12, 2), default=0)
+    target_amount = Column(Numeric(12, 2), nullable=False)
+    achieved_amount = Column(Numeric(12, 2), default=0)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -1233,176 +1192,7 @@ class CampaignRecipients(Base):
     campaign = relationship("EmailCampaigns")
     contact = relationship("Contacts")
 
-# Document Management
-class Documents(Base):
-    __tablename__ = "documents"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    description = Column(Text)
-    file_path = Column(String(500), nullable=False)
-    file_size = Column(Integer)
-    mime_type = Column(String(100))
-    
-    # Related entities
-    related_entity_type = Column(String(50))  # company, contact, deal, employee, etc.
-    related_entity_id = Column(Integer)
-    
-    # Access control
-    is_public = Column(Boolean, default=False)
-    uploaded_by_id = Column(Integer, ForeignKey("users.id"))
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
-    # Relationships
-    uploaded_by = relationship("Users")
 
-# Performance Management
-class PerformanceReviews(Base):
-    __tablename__ = "performance_reviews"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"))
-    reviewer_id = Column(Integer, ForeignKey("users.id"))
-    
-    # Review period
-    review_period = Column(String(20))  # quarterly, half_yearly, yearly
-    period_start = Column(Date, nullable=False)
-    period_end = Column(Date, nullable=False)
-    
-    # Ratings (1-5 scale)
-    overall_rating = Column(Decimal(2, 1))
-    technical_skills = Column(Decimal(2, 1))
-    communication = Column(Decimal(2, 1))
-    teamwork = Column(Decimal(2, 1))
-    leadership = Column(Decimal(2, 1))
-    punctuality = Column(Decimal(2, 1))
-    
-    # Comments
-    strengths = Column(Text)
-    areas_for_improvement = Column(Text)
-    goals_for_next_period = Column(Text)
-    employee_comments = Column(Text)
-    
-    status = Column(String(20), default="draft")  # draft, completed, acknowledged
-    submitted_at = Column(DateTime(timezone=True))
-    acknowledged_at = Column(DateTime(timezone=True))
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    employee = relationship("Employees")
-    reviewer = relationship("Users")
-
-# Audit Trail
-# Training & Development
-class TrainingPrograms(Base):
-    __tablename__ = "training_programs"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(200), nullable=False)
-    description = Column(Text)
-    category = Column(String(100))  # technical, soft_skills, compliance, etc.
-    
-    # Program details
-    duration_hours = Column(Integer)
-    is_mandatory = Column(Boolean, default=False)
-    certification_provided = Column(Boolean, default=False)
-    max_participants = Column(Integer)
-    
-    # Instructor
-    instructor_id = Column(Integer, ForeignKey("users.id"))
-    external_instructor = Column(String(200))
-    
-    # Scheduling
-    start_date = Column(Date)
-    end_date = Column(Date)
-    location = Column(String(200))
-    is_online = Column(Boolean, default=False)
-    meeting_link = Column(String(500))
-    
-    status = Column(String(20), default="planned")  # planned, ongoing, completed, cancelled
-    
-    created_by_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    instructor = relationship("Users", foreign_keys=[instructor_id])
-    created_by = relationship("Users", foreign_keys=[created_by_id])
-
-class TrainingEnrollments(Base):
-    __tablename__ = "training_enrollments"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    program_id = Column(Integer, ForeignKey("training_programs.id"))
-    employee_id = Column(Integer, ForeignKey("employees.id"))
-    
-    # Enrollment details
-    enrolled_at = Column(DateTime(timezone=True), server_default=func.now())
-    status = Column(String(20), default="enrolled")  # enrolled, in_progress, completed, dropped
-    
-    # Completion tracking
-    completion_percentage = Column(Integer, default=0)
-    completed_at = Column(DateTime(timezone=True))
-    score = Column(Decimal(5, 2))  # Final score/grade
-    certificate_issued = Column(Boolean, default=False)
-    
-    # Feedback
-    feedback = Column(Text)
-    rating = Column(Integer)  # 1-5 rating
-    
-    # Relationships
-    program = relationship("TrainingPrograms")
-    employee = relationship("Employees")
-
-# Expense Management
-class ExpenseCategories(Base):
-    __tablename__ = "expense_categories"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100), nullable=False, unique=True)
-    description = Column(Text)
-    is_active = Column(Boolean, default=True)
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-class Expenses(Base):
-    __tablename__ = "expenses"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    employee_id = Column(Integer, ForeignKey("employees.id"))
-    category_id = Column(Integer, ForeignKey("expense_categories.id"))
-    
-    # Expense details
-    title = Column(String(200), nullable=False)
-    description = Column(Text)
-    amount = Column(Decimal(10, 2), nullable=False)
-    expense_date = Column(Date, nullable=False)
-    currency = Column(String(10), default="INR")
-    
-    # Receipt
-    receipt_url = Column(String(500))
-    receipt_number = Column(String(100))
-    
-    # Approval workflow
-    status = Column(String(20), default="pending")  # pending, approved, rejected, reimbursed
-    approved_by_id = Column(Integer, ForeignKey("users.id"))
-    approval_date = Column(DateTime(timezone=True))
-    approval_comments = Column(Text)
-    
-    # Reimbursement
-    reimbursed_amount = Column(Decimal(10, 2))
-    reimbursed_at = Column(DateTime(timezone=True))
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Relationships
-    employee = relationship("Employees")
-    category = relationship("ExpenseCategories")
-    approved_by = relationship("Users")
 
 class AuditLog(Base):
     __tablename__ = "audit_log"
