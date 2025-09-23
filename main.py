@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
@@ -54,8 +56,8 @@ add_all_middleware(app)
 # Security
 security = HTTPBearer(auto_error=False)
 
-@app.get("/")
-async def root():
+@app.get("/api/info")
+async def api_info():
     return {
         "message": "Welcome to CRM + HRMS System",
         "status": "active",
@@ -96,6 +98,29 @@ app.include_router(projects.router, prefix="/api/v1/projects", tags=["Project Ma
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
 
 print("✅ All API endpoints enabled and ready!")
+
+# Mount static files for production (serve React build)
+import os
+if os.path.exists("frontend/build"):
+    app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+    
+    @app.get("/")
+    async def serve_react_root():
+        """Serve React app at root"""
+        return FileResponse("frontend/build/index.html")
+    
+    @app.get("/{path:path}")
+    async def serve_react_app(path: str):
+        """Serve React app for all non-API routes"""
+        if path.startswith("api/") or path.startswith("docs") or path.startswith("redoc") or path.startswith("openapi.json"):
+            raise HTTPException(status_code=404, detail="Not found")
+        
+        file_path = f"frontend/build/{path}"
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse("frontend/build/index.html")
+    
+    print("✅ React app mounted for production")
 
 
 if __name__ == "__main__":

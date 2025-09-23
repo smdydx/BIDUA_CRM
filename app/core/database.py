@@ -7,10 +7,22 @@ import os
 
 Base = declarative_base()
 
-# Database configuration - SQLite for reliable operation
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./crm_hrms.db")
+# Database configuration - PostgreSQL in production, SQLite in development
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    # Development fallback to SQLite
+    DATABASE_URL = "sqlite:///./crm_hrms.db"
+    print("⚠️ Using SQLite for development. Set DATABASE_URL for production PostgreSQL.")
+else:
+    print(f"✅ Using PostgreSQL database from DATABASE_URL")
 
-print(f"🗄️ Using database: {DATABASE_URL}")
+# Log database type without exposing credentials
+if DATABASE_URL.startswith("postgresql://"):
+    print("🗄️ Using database: PostgreSQL")
+elif DATABASE_URL.startswith("sqlite://"):
+    print("🗄️ Using database: SQLite")
+else:
+    print("🗄️ Using database: Unknown type")
 
 # Create engine with performance optimizations for PostgreSQL
 engine = create_engine(

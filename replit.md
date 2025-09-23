@@ -12,16 +12,17 @@ This is a comprehensive Customer Relationship Management and Human Resource Mana
 ## Recent Changes (September 23, 2025)
 - Successfully imported GitHub project into Replit environment
 - Installed Python 3.11, Node.js 20, and all required dependencies
-- Migrated database configuration from SQLite to PostgreSQL
-- **CONFIGURED**: Full-stack application with React frontend on port 5000 and FastAPI backend on port 8000
-- **CONFIGURED**: React frontend to trust Replit proxy with proper host settings
-- **CONFIGURED**: Backend to use localhost and connect to Replit PostgreSQL database
-- **CREATED**: Unified startup script (start_app.sh) that runs both frontend and backend
+- **CONFIGURED**: PostgreSQL database integration with proper fallback to SQLite in development
+- **CONFIGURED**: Full-stack application with React frontend on port 5000 and FastAPI backend on port 8000 (development)
+- **CONFIGURED**: React frontend to trust Replit proxy with proper host settings (HOST=0.0.0.0, DISABLE_HOST_CHECK=true)
+- **CONFIGURED**: Backend to use localhost in development, 0.0.0.0 in production
+- **CREATED**: Development startup script (start_app.sh) that runs both frontend and backend
 - **CONFIGURED**: Single workflow "Frontend Server" that serves the React app on port 5000
+- **CONFIGURED**: Production deployment with React build served through FastAPI on port 5000
 - **TESTED**: Frontend-backend integration via proxy - API calls working correctly
-- **CONFIGURED**: Autoscale deployment configuration for production
+- **FIXED**: CORS configuration and security issues identified in review
 - All API endpoints working: Authentication, CRM, HR, Analytics, Projects
-- Application is fully functional with React frontend and FastAPI backend integrated
+- Application is fully functional with complete development and production configurations
 
 ## Project Architecture
 
@@ -65,8 +66,13 @@ The system includes comprehensive models for:
 
 ## Deployment Configuration
 - **Target**: Autoscale (stateless web application)
-- **Command**: `uvicorn main:app --host 0.0.0.0 --port 5000`
-- **Port**: 5000 (configured for Replit environment)
+- **Build**: `cd frontend && npm ci && npm run build` (builds React frontend)
+- **Command**: `uvicorn main:app --host 0.0.0.0 --port 5000` (serves both API and React app)
+- **Port**: 5000 (serves complete full-stack application)
+
+## Development vs Production
+- **Development**: React dev server on port 5000, FastAPI on port 8000 with proxy
+- **Production**: Single FastAPI server on port 5000 serving built React app and API
 
 ## Technical Notes
 - Uses SQLAlchemy 2.0 with proper `text()` functions for raw SQL
