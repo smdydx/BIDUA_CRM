@@ -1,6 +1,6 @@
 
 from sqlalchemy import create_engine
-from models import Base
+from app.models.models import Base
 import os
 
 # Get database URL - use SQLite if DATABASE_URL not set
