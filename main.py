@@ -412,24 +412,26 @@ if os.path.exists(build_dir):
         # Serve index.html for all other routes
         return FileResponse(os.path.join(build_dir, "index.html"))
 
-# Create tables on startup
-@app.on_event("startup")
-async def startup_event():
-    """Create database tables on startup"""
-    try:
-        # Create all tables
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully!")
-    except Exception as e:
-        print(f"❌ Error creating tables: {e}")
+# Create tables on startup - DISABLED to prevent hanging
+# Tables are created separately using create_tables_fixed.py
+# @app.on_event("startup")
+# async def startup_event():
+#     """Create database tables on startup"""
+#     try:
+#         # Create all tables
+#         Base.metadata.create_all(bind=engine)
+#         print("✅ Database tables created successfully!")
+#     except Exception as e:
+#         print(f"❌ Error creating tables: {e}")
 
 if __name__ == "__main__":
-    # Create tables first
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created!")
-    except Exception as e:
-        print(f"❌ Error creating tables: {e}")
+    # Create tables first - DISABLED to prevent hanging
+    # Tables are created separately using create_tables_fixed.py
+    # try:
+    #     Base.metadata.create_all(bind=engine)
+    #     print("✅ Database tables created!")
+    # except Exception as e:
+    #     print(f"❌ Error creating tables: {e}")
 
     # Environment-based configuration
     APP_ENV = os.getenv("APP_ENV", "development")
