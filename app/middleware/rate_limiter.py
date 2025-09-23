@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class AdvancedRateLimiter:
     def __init__(self, redis_url: str = "redis://localhost:6379/1"):
         try:
-            self.redis = redis.Redis.from_url(redis_url, decode_responses=True)
+            self.redis = redis.Redis.from_url(redis_url, decode_responses=True, socket_connect_timeout=1)
             self.redis.ping()
             logger.info("✅ Redis rate limiter initialized")
         except Exception as e:

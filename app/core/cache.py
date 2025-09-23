@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class CacheService:
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         try:
-            self.redis_client = redis.Redis.from_url(redis_url, decode_responses=False)
+            self.redis_client = redis.Redis.from_url(redis_url, decode_responses=False, socket_connect_timeout=1)
             self.redis_client.ping()
             logger.info("✅ Redis connected successfully")
         except Exception as e:
