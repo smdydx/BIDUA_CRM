@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -41,7 +40,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # For demo purposes, return mock user data
     return {
         "id": 1,
@@ -68,13 +67,13 @@ async def login(login_data: dict, db: Session = Depends(get_db)):
     try:
         email = login_data.get("username") or login_data.get("email")
         password = login_data.get("password")
-        
+
         if not email or not password:
             raise HTTPException(
                 status_code=400,
                 detail="Email and password are required"
             )
-        
+
         # For demo, accept these credentials
         demo_users = {
             "admin@company.com": {"password": "admin123", "role": "admin", "name": "Admin User"},
@@ -82,7 +81,7 @@ async def login(login_data: dict, db: Session = Depends(get_db)):
             "employee@company.com": {"password": "emp123", "role": "employee", "name": "John Employee"},
             "sales@company.com": {"password": "sales123", "role": "sales", "name": "Sales Rep"}
         }
-        
+
         if email in demo_users and demo_users[email]["password"] == password:
             user_data = demo_users[email]
             return {
@@ -103,7 +102,7 @@ async def login(login_data: dict, db: Session = Depends(get_db)):
                 status_code=401,
                 detail="Invalid credentials"
             )
-            
+
     except HTTPException:
         raise
     except Exception as e:
@@ -187,12 +186,22 @@ if __name__ == "__main__":
         print("✅ Database tables created!")
     except Exception as e:
         print(f"❌ Error creating tables: {e}")
-    
-    # Run the app
+
+    import socket
+
+    # Check if port 5000 is available
+    port = 5000
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    result = sock.connect_ex(('127.0.0.1', port))
+    sock.close()
+
+    if result == 0:
+        port = 5001  # Use alternative port if 5000 is busy
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=5000,
+        port=port,
         reload=True,
         log_level="info"
     )

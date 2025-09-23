@@ -1,30 +1,50 @@
+
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { CssBaseline, Box } from '@mui/material';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 import Dashboard from './components/Dashboard/Dashboard';
 import Login from './components/Auth/Login';
-import Register from './components/Auth/Register'; // Assuming Register component is created
+import Register from './components/Auth/Register';
 import Users from './components/Users/Users';
 import CRM from './components/CRM/CRM';
 import HR from './components/HR/HR';
 import Projects from './components/Projects/Projects';
 import Analytics from './components/Analytics/Analytics';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { toast } from 'react-toastify';
 import ProtectedRoute from './components/ProtectedRoute';
 
-function AppContent() {
-  const { user, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#667eea',
+    },
+    secondary: {
+      main: '#764ba2',
+    },
+    background: {
+      default: '#f5f5f5',
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+  },
+});
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+const AppContent = () => {
+  const { isAuthenticated } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // If not logged in, redirect to login or register
-  if (!user) {
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  if (!isAuthenticated) {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -34,41 +54,83 @@ function AppContent() {
     );
   }
 
-  // If logged in, show the main app content
   return (
     <Box sx={{ display: 'flex' }}>
-      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <Box 
-        component="main" 
-        sx={{ 
-          flexGrow: 1, 
-          p: { xs: 1, sm: 2, md: 3 }, 
-          mt: { xs: 7, md: 8 },
-          ml: { md: sidebarOpen ? `280px` : 0 },
-          transition: 'margin 0.3s ease'
+      <CssBaseline />
+      <Navbar onMenuClick={handleDrawerToggle} />
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={handleDrawerToggle} />
+      
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - 240px)` },
+          mt: '64px',
+          minHeight: 'calc(100vh - 64px)',
+          backgroundColor: '#f5f5f5'
         }}
       >
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/crm/*" element={<CRM />} />
-          <Route path="/hr/*" element={<HR />} />
-          <Route path="/projects/*" element={<Projects />} />
-          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/users" element={
+            <ProtectedRoute>
+              <Users />
+            </ProtectedRoute>
+          } />
+          <Route path="/crm/*" element={
+            <ProtectedRoute>
+              <CRM />
+            </ProtectedRoute>
+          } />
+          <Route path="/hr/*" element={
+            <ProtectedRoute>
+              <HR />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects" element={
+            <ProtectedRoute>
+              <Projects />
+            </ProtectedRoute>
+          } />
+          <Route path="/analytics" element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          } />
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Box>
     </Box>
   );
-}
+};
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <AuthProvider>
+          <AppContent />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+        </AuthProvider>
+      </Router>
+    </ThemeProvider>
   );
 }
 
