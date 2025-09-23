@@ -13,7 +13,7 @@ import Projects from './components/Projects/Projects';
 import Analytics from './components/Analytics/Analytics';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { toast } from 'react-toastify';
-import ProtectedRoute from './components/ProtectedRoute'; // Assuming ProtectedRoute is correctly imported
+import ProtectedRoute from './components/ProtectedRoute';
 
 function AppContent() {
   const { user, loading } = useAuth();
