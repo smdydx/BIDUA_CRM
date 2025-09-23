@@ -33,16 +33,27 @@ export const AuthProvider = ({ children }) => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser && storedUser !== 'undefined') {
+    if (storedToken && storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser && typeof parsedUser === 'object') {
+          setToken(storedToken);
+          setUser(parsedUser);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        } else {
+          // Clear invalid data
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
       } catch (error) {
         console.error('Error parsing stored user data:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else if (storedUser === 'undefined' || storedUser === 'null') {
+      // Clean up invalid data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
   }, []);
 
