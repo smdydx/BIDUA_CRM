@@ -15,17 +15,20 @@ def run_tests():
     print("🚀 Starting CRM + HRMS System Test Suite...")
     print("=" * 60)
     
-    # Install test dependencies
-    test_packages = [
-        "pytest",
-        "pytest-cov", 
-        "pytest-html",
-        "httpx"  # For TestClient
-    ]
-    
-    print("📦 Installing test dependencies...")
-    for package in test_packages:
-        subprocess.run([sys.executable, "-m", "pip", "install", package], check=True)
+    # Check if test dependencies are already available
+    try:
+        import pytest
+        import httpx
+        print("✅ Test dependencies already available!")
+    except ImportError:
+        print("❌ Test dependencies not found. Please install them manually:")
+        print("   Add these packages to requirements.txt:")
+        print("   - pytest>=8.0.0")
+        print("   - pytest-cov>=4.0.0") 
+        print("   - pytest-html>=4.0.0")
+        print("   - httpx>=0.24.0")
+        print("   Then restart your Repl to auto-install them.")
+        return False
     
     # Run tests with coverage
     test_commands = [
@@ -34,13 +37,32 @@ def run_tests():
             "python", "-m", "pytest", 
             "tests/", 
             "-v", 
-            "--cov=app",
-            "--cov-report=html:htmlcov",
-            "--cov-report=term-missing",
-            "--html=test_report.html",
-            "--self-contained-html"
+            "--tb=short",
+            "--maxfail=10"
         ]
     ]
+    
+    # Try to run with coverage if available
+    try:
+        import pytest_cov
+        test_commands[0].extend([
+            "--cov=app",
+            "--cov-report=term-missing"
+        ])
+        print("✅ Running tests with coverage reporting")
+    except ImportError:
+        print("⚠️ Running tests without coverage (pytest-cov not available)")
+    
+    # Try to generate HTML report if available
+    try:
+        import pytest_html
+        test_commands[0].extend([
+            "--html=test_report.html",
+            "--self-contained-html"
+        ])
+        print("✅ Will generate HTML test report")
+    except ImportError:
+        print("⚠️ HTML test report not available (pytest-html not installed)")
     
     for cmd in test_commands:
         print(f"\n🧪 Running: {' '.join(cmd)}")
@@ -54,11 +76,16 @@ def run_tests():
             print("STDOUT:", e.stdout)
             print("STDERR:", e.stderr)
             return False
+        except FileNotFoundError:
+            print("❌ pytest not found. Please ensure pytest is installed.")
+            return False
     
     print("\n✅ All tests completed successfully!")
     print("\n📊 Test Reports:")
-    print("- HTML Coverage Report: htmlcov/index.html")
-    print("- Test Report: test_report.html")
+    if os.path.exists("test_report.html"):
+        print("- Test Report: test_report.html")
+    if os.path.exists("htmlcov/index.html"):
+        print("- Coverage Report: htmlcov/index.html")
     
     return True
 
