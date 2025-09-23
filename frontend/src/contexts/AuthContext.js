@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await axios.get('/api/v1/users/me');
+          const response = await axios.get('/api/v1/auth/me');
           setUser(response.data);
         } catch (error) {
           localStorage.removeItem('token');
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       setToken(access_token);
       
       // Get user info
-      const userResponse = await axios.get('/api/v1/users/me');
+      const userResponse = await axios.get('/api/v1/auth/me');
       setUser(userResponse.data);
       
       toast.success('Login successful!');
@@ -84,7 +84,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('/api/v1/auth/register', userData);
+      // Add username field for backend compatibility
+      const registrationData = {
+        ...userData,
+        username: userData.email.split('@')[0] // Use email prefix as username
+      };
+      const response = await axios.post('/api/v1/auth/register', registrationData);
       toast.success('Registration successful! Please login.');
       return true;
     } catch (error) {

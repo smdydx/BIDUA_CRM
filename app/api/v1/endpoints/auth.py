@@ -13,26 +13,34 @@ security = HTTPBearer(auto_error=False)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Get current authenticated user - simplified for demo"""
-    if not credentials:
+    if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    # TODO: Implement proper JWT token validation
-    # For demo, return hardcoded admin user
-    return schemas.UserResponse(
-        id=1,
-        username="admin",
-        email="admin@example.com",
-        first_name="Admin",
-        last_name="User",
-        role=schemas.UserRole.ADMIN,
-        is_active=True,
-        last_login=None,
-        created_at="2025-01-01T00:00:00",
-        updated_at=None
-    )
+    
+    # For demo purposes, accept any valid token format
+    token = credentials.credentials
+    if token == "demo_jwt_token":
+        return schemas.UserResponse(
+            id=1,
+            username="admin",
+            email="admin@example.com",
+            first_name="Admin",
+            last_name="User",
+            role=schemas.UserRole.ADMIN,
+            is_active=True,
+            last_login=None,
+            created_at="2025-01-01T00:00:00",
+            updated_at=None
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 def get_pagination_params(page: int = 1, size: int = 20):
     """Get pagination parameters"""
