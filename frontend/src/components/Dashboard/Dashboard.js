@@ -14,7 +14,9 @@ import {
   IconButton,
   Menu,
   MenuItem,
-  Divider
+  Divider,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   TrendingUp,
@@ -58,6 +60,9 @@ const Dashboard = () => {
     revenue_by_stage: []
   });
   const [anchorEl, setAnchorEl] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     fetchAnalytics();
@@ -163,19 +168,38 @@ const Dashboard = () => {
   ];
 
   return (
-    <Box sx={{ flexGrow: 1, p: 3, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+    <Box sx={{ 
+      flexGrow: 1, 
+      p: { xs: 1, sm: 2, md: 3 }, 
+      bgcolor: '#f5f5f5', 
+      minHeight: '100vh' 
+    }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50', mb: 1 }}>
+      <Box sx={{ mb: { xs: 2, md: 4 } }}>
+        <Typography 
+          variant={isMobile ? "h5" : "h4"} 
+          sx={{ 
+            fontWeight: 'bold', 
+            color: '#2c3e50', 
+            mb: 1,
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+          }}
+        >
           Dashboard Overview
         </Typography>
-        <Typography variant="subtitle1" sx={{ color: '#7f8c8d' }}>
+        <Typography 
+          variant={isMobile ? "body2" : "subtitle1"} 
+          sx={{ 
+            color: '#7f8c8d',
+            fontSize: { xs: '0.875rem', md: '1rem' }
+          }}
+        >
           Welcome back! Here's what's happening with your business today.
         </Typography>
       </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: { xs: 3, md: 4 } }}>
         {statsCards.map((card, index) => (
           <Grid item xs={12} sm={6} md={3} key={index}>
             <Card 
@@ -184,50 +208,92 @@ const Dashboard = () => {
                 borderRadius: 3,
                 border: '1px solid #e0e0e0',
                 transition: 'all 0.3s ease',
+                height: '100%',
                 '&:hover': {
                   transform: 'translateY(-4px)',
                   boxShadow: 4
                 }
               }}
             >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  mb: { xs: 1.5, md: 2 },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  textAlign: { xs: 'center', sm: 'left' }
+                }}>
                   <Avatar
                     sx={{
                       bgcolor: card.bgColor,
                       color: card.color,
-                      width: 48,
-                      height: 48,
-                      mr: 2
+                      width: { xs: 40, md: 48 },
+                      height: { xs: 40, md: 48 },
+                      mr: { xs: 0, sm: 2 },
+                      mb: { xs: 1, sm: 0 }
                     }}
                   >
-                    {card.icon}
+                    {React.cloneElement(card.icon, {
+                      fontSize: isMobile ? 'medium' : 'large'
+                    })}
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
-                    <Typography variant="subtitle2" color="text.secondary">
+                    <Typography 
+                      variant={isMobile ? "caption" : "subtitle2"} 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}
+                    >
                       {card.title}
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2c3e50' }}>
+                    <Typography 
+                      variant={isMobile ? "h5" : "h4"} 
+                      sx={{ 
+                        fontWeight: 'bold', 
+                        color: '#2c3e50',
+                        fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.125rem' }
+                      }}
+                    >
                       {card.value}
                     </Typography>
                   </Box>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  justifyContent: { xs: 'center', sm: 'flex-start' }
+                }}>
                   {card.changeType === 'positive' ? (
-                    <ArrowUpward sx={{ color: '#4CAF50', fontSize: 16, mr: 0.5 }} />
+                    <ArrowUpward sx={{ 
+                      color: '#4CAF50', 
+                      fontSize: { xs: 14, md: 16 }, 
+                      mr: 0.5 
+                    }} />
                   ) : (
-                    <ArrowDownward sx={{ color: '#F44336', fontSize: 16, mr: 0.5 }} />
+                    <ArrowDownward sx={{ 
+                      color: '#F44336', 
+                      fontSize: { xs: 14, md: 16 }, 
+                      mr: 0.5 
+                    }} />
                   )}
                   <Typography
-                    variant="body2"
+                    variant={isMobile ? "caption" : "body2"}
                     sx={{
                       color: card.changeType === 'positive' ? '#4CAF50' : '#F44336',
-                      fontWeight: 'medium'
+                      fontWeight: 'medium',
+                      fontSize: { xs: '0.7rem', md: '0.875rem' }
                     }}
                   >
                     {card.change}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary', ml: 1 }}>
+                  <Typography 
+                    variant={isMobile ? "caption" : "body2"} 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      ml: 1,
+                      fontSize: { xs: '0.7rem', md: '0.875rem' },
+                      display: { xs: 'none', sm: 'inline' }
+                    }}
+                  >
                     from last month
                   </Typography>
                 </Box>
@@ -237,18 +303,32 @@ const Dashboard = () => {
         ))}
       </Grid>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         {/* Revenue Chart */}
         <Grid item xs={12} md={8}>
           <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #e0e0e0' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mb: { xs: 2, md: 3 },
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: { xs: 1, sm: 0 }
+              }}>
+                <Typography 
+                  variant={isMobile ? "subtitle1" : "h6"} 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    textAlign: { xs: 'center', sm: 'left' }
+                  }}
+                >
                   Revenue Overview
                 </Typography>
                 <IconButton
                   onClick={(e) => setAnchorEl(e.currentTarget)}
                   size="small"
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 >
                   <MoreVert />
                 </IconButton>
@@ -262,13 +342,22 @@ const Dashboard = () => {
                 </Menu>
               </Box>
               
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={isMobile ? 200 : 300}>
                 <AreaChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
+                  <XAxis 
+                    dataKey="month" 
+                    fontSize={isMobile ? 10 : 12}
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                  />
+                  <YAxis 
+                    fontSize={isMobile ? 10 : 12}
+                    tick={{ fontSize: isMobile ? 10 : 12 }}
+                  />
                   <Tooltip 
                     formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']}
+                    labelStyle={{ fontSize: isMobile ? '12px' : '14px' }}
+                    contentStyle={{ fontSize: isMobile ? '12px' : '14px' }}
                   />
                   <Area 
                     type="monotone" 
@@ -291,19 +380,26 @@ const Dashboard = () => {
         {/* Project Status */}
         <Grid item xs={12} md={4}>
           <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #e0e0e0' }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              <Typography 
+                variant={isMobile ? "subtitle1" : "h6"} 
+                sx={{ 
+                  fontWeight: 'bold', 
+                  mb: { xs: 2, md: 3 },
+                  textAlign: { xs: 'center', md: 'left' }
+                }}
+              >
                 Project Status
               </Typography>
               
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
                 <PieChart>
                   <Pie
                     data={projectStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={40}
-                    outerRadius={80}
+                    innerRadius={isMobile ? 30 : 40}
+                    outerRadius={isMobile ? 60 : 80}
                     paddingAngle={5}
                     dataKey="value"
                   >
@@ -311,26 +407,47 @@ const Dashboard = () => {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ fontSize: isMobile ? '12px' : '14px' }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
               
               <Box sx={{ mt: 2 }}>
                 {projectStatusData.map((item, index) => (
-                  <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        bgcolor: item.color,
-                        borderRadius: '50%',
-                        mr: 1
+                  <Box key={index} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    mb: 1,
+                    justifyContent: 'space-between'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                      <Box
+                        sx={{
+                          width: { xs: 10, md: 12 },
+                          height: { xs: 10, md: 12 },
+                          bgcolor: item.color,
+                          borderRadius: '50%',
+                          mr: 1
+                        }}
+                      />
+                      <Typography 
+                        variant={isMobile ? "caption" : "body2"} 
+                        sx={{ 
+                          flex: 1,
+                          fontSize: { xs: '0.75rem', md: '0.875rem' }
+                        }}
+                      >
+                        {item.name}
+                      </Typography>
+                    </Box>
+                    <Typography 
+                      variant={isMobile ? "caption" : "body2"} 
+                      sx={{ 
+                        fontWeight: 'bold',
+                        fontSize: { xs: '0.75rem', md: '0.875rem' }
                       }}
-                    />
-                    <Typography variant="body2" sx={{ flex: 1 }}>
-                      {item.name}
-                    </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                    >
                       {item.value}%
                     </Typography>
                   </Box>

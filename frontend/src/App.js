@@ -39,7 +39,16 @@ function AppContent() {
     <Box sx={{ display: 'flex' }}>
       <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 8 }}>
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          p: { xs: 1, sm: 2, md: 3 }, 
+          mt: { xs: 7, md: 8 },
+          ml: { md: sidebarOpen ? `280px` : 0 },
+          transition: 'margin 0.3s ease'
+        }}
+      >
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />

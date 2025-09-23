@@ -14,7 +14,9 @@ import {
   Divider,
   Collapse,
   Badge,
-  Chip
+  Chip,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Dashboard,
@@ -37,6 +39,8 @@ const Sidebar = ({ open, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState({});
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const toggleMenu = (menuId) => {
     setExpandedMenus(prev => ({
@@ -144,7 +148,7 @@ const Sidebar = ({ open, onClose }) => {
       anchor="left"
       open={open}
       onClose={onClose}
-      variant="persistent"
+      variant={isMobile ? "temporary" : "persistent"}
       sx={{
         width: drawerWidth,
         flexShrink: 0,
