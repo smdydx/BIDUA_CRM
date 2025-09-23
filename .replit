@@ -63,13 +63,13 @@ args = "Frontend Server"
 name = "Frontend Server"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "./start_app.sh"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./start_dev.sh"
+waitForPort = 5000
 
 [[workflows.workflow]]
 name = "Full Stack CRM HRMS"
@@ -95,6 +95,10 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 43399
+externalPort = 3002
 
 [deployment]
 deploymentTarget = "autoscale"
