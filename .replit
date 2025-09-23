@@ -8,7 +8,7 @@ channel = "stable-25_05"
 packages = ["libiconv", "libxcrypt", "nodejs-18_x", "npm"]
 
 [workflows]
-runButton = "Project"
+runButton = "Full Stack Development Server"
 
 [[workflows.workflow]]
 name = "CRM HRMS Server"
@@ -86,6 +86,19 @@ args = "cd frontend && npm install && BROWSER=none npm start"
 
 [[workflows.workflow]]
 name = "Full Stack Development"
+author = 47927833
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm start"
+
+[[workflows.workflow]]
+name = "Full Stack Development Server"
 author = 47927833
 mode = "parallel"
 
