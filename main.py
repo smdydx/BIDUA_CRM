@@ -83,12 +83,9 @@ async def health_check(db: Session = Depends(get_db)):
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
-@app.get("/openapi.json")
-async def get_openapi():
-    """Get OpenAPI specification"""
-    return app.openapi()
+# OpenAPI endpoint removed - using FastAPI's default app.openapi() generation
 
-# Include routers - import from endpoints
+# Include routers - re-enabled after fixing Base duplication issue
 from app.api.v1.endpoints import auth, users, hr, crm, projects, analytics
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
@@ -97,6 +94,8 @@ app.include_router(hr.router, prefix="/api/v1/hr", tags=["HR Management"])
 app.include_router(crm.router, prefix="/api/v1/crm", tags=["CRM"])
 app.include_router(projects.router, prefix="/api/v1/projects", tags=["Project Management"])
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
+
+print("✅ All API endpoints enabled and ready!")
 
 
 if __name__ == "__main__":

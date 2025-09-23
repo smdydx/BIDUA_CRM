@@ -1,7 +1,6 @@
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, Date, Time, Enum, CheckConstraint, UniqueConstraint, Index
 from sqlalchemy.sql.sqltypes import Numeric
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 import enum
@@ -9,7 +8,8 @@ import re
 from datetime import datetime, date
 from decimal import Decimal as PyDecimal
 
-Base = declarative_base()
+# Import the shared Base from database.py to avoid duplication
+from app.core.database import Base
 
 # Enums for better data integrity
 class UserRole(enum.Enum):
