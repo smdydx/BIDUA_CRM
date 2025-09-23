@@ -8,7 +8,7 @@ channel = "stable-25_05"
 packages = ["cargo", "libiconv", "libxcrypt", "nodejs-18_x", "npm", "rustc"]
 
 [workflows]
-runButton = "Full Stack Development Server"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "CRM HRMS Server"
@@ -68,7 +68,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "./start_dev.sh"
+args = "bash start_dev.sh"
 waitForPort = 5000
 
 [[workflows.workflow]]
@@ -121,6 +121,10 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 43351
+externalPort = 3002
 
 [deployment]
 deploymentTarget = "autoscale"
