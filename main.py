@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, Depends, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -134,14 +133,14 @@ async def create_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     existing_username = await crud.user.get_by_username(db, username=user.username)
     if existing_username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already taken"
         )
-    
+
     return await crud.user.create(db, obj_in=user)
 
 @app.get("/users/", response_model=List[schemas.UserResponse])
@@ -159,7 +158,7 @@ async def get_users(
         filters['role'] = role
     if is_active is not None:
         filters['is_active'] = is_active
-    
+
     users = await crud.user.get_multi(
         db, 
         skip=pagination["skip"], 
@@ -244,7 +243,7 @@ async def get_departments(
     filters = {}
     if is_active is not None:
         filters['is_active'] = is_active
-    
+
     return await crud.department.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -298,7 +297,7 @@ async def get_designations(
         filters['department_id'] = department_id
     if is_active is not None:
         filters['is_active'] = is_active
-    
+
     return await crud.designation.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -336,7 +335,7 @@ async def get_employees(
         filters['status'] = status
     if manager_id:
         filters['manager_id'] = manager_id
-    
+
     return await crud.employee.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -387,7 +386,7 @@ async def get_leave_types(
     filters = {}
     if is_active is not None:
         filters['is_active'] = is_active
-    
+
     return await crud.leave_type.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -416,7 +415,7 @@ async def get_leave_requests(
         filters['employee_id'] = employee_id
     if status:
         filters['status'] = status
-    
+
     return await crud.leave_request.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -431,7 +430,7 @@ async def approve_leave_request(
     leave_request = await crud.leave_request.get(db, id=request_id)
     if not leave_request:
         raise HTTPException(status_code=404, detail="Leave request not found")
-    
+
     update_data = {"status": "approved", "approved_by_id": current_user.id}
     await crud.leave_request.update(db, db_obj=leave_request, obj_in=update_data)
     return {"message": "Leave request approved", "success": True}
@@ -469,7 +468,7 @@ async def get_companies(
         filters['industry'] = industry
     if size:
         filters['size'] = size
-    
+
     return await crud.company.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], 
         filters=filters, search=search
@@ -524,7 +523,7 @@ async def get_contacts(
         filters['company_id'] = company_id
     if is_primary is not None:
         filters['is_primary'] = is_primary
-    
+
     return await crud.contact.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -553,7 +552,7 @@ async def get_leads(
         filters['status'] = status
     if assigned_to_id:
         filters['assigned_to_id'] = assigned_to_id
-    
+
     return await crud.lead.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -582,7 +581,7 @@ async def get_deals(
         filters['stage'] = stage
     if owner_id:
         filters['owner_id'] = owner_id
-    
+
     return await crud.deal.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -622,7 +621,7 @@ async def get_activities(
         filters['deal_id'] = deal_id
     if is_completed is not None:
         filters['is_completed'] = is_completed
-    
+
     return await crud.activity.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -661,7 +660,7 @@ async def get_projects(
         filters['status'] = status
     if manager_id:
         filters['manager_id'] = manager_id
-    
+
     return await crud.project.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -708,7 +707,7 @@ async def get_tasks(
         filters['status'] = status
     if priority:
         filters['priority'] = priority
-    
+
     return await crud.task.get_multi(
         db, skip=pagination["skip"], limit=pagination["limit"], filters=filters
     )
@@ -750,10 +749,10 @@ async def get_dashboard_analytics(
     total_deals = await crud.deal.get_count(db)
     total_projects = await crud.project.get_count(db)
     total_tasks = await crud.task.get_count(db)
-    
+
     # Get revenue by stage
     revenue_by_stage = await crud.deal.get_revenue_by_stage(db)
-    
+
     return {
         "total_users": total_users,
         "total_employees": total_employees,
@@ -764,6 +763,15 @@ async def get_dashboard_analytics(
         "total_tasks": total_tasks,
         "revenue_by_stage": revenue_by_stage
     }
+
+# Include routers
+app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(hr.router, prefix="/hr", tags=["HR Management"])
+app.include_router(crm.router, prefix="/crm", tags=["CRM"])
+app.include_router(projects.router, prefix="/projects", tags=["Project Management"])
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+
 
 if __name__ == "__main__":
     uvicorn.run(

@@ -34,11 +34,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         updated_at=None
     )
 
-def get_pagination_params(skip: int = 0, limit: int = 100):
+def get_pagination_params(page: int = 1, size: int = 20):
     """Get pagination parameters"""
-    if limit > 100:
-        limit = 100
-    return {"skip": skip, "limit": limit}
+    if size > 100:
+        size = 100
+    if page < 1:
+        page = 1
+    skip = (page - 1) * size
+    return {"skip": skip, "limit": size, "page": page, "size": size}
 
 @router.post("/login")
 async def login_user(
