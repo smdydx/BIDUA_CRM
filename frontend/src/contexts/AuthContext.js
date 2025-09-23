@@ -21,9 +21,10 @@ export const AuthProvider = ({ children }) => {
 
   // Set axios default headers and base URL
   useEffect(() => {
-    // Set base URL for development
+    // For Replit environment, use the proxy
     if (process.env.NODE_ENV === 'development') {
-      axios.defaults.baseURL = 'http://localhost:8000';
+      // Let the proxy handle backend requests
+      axios.defaults.baseURL = '';
     }
     
     if (token) {
@@ -39,10 +40,10 @@ export const AuthProvider = ({ children }) => {
       const storedToken = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
 
-      if (storedToken && storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
+      if (storedToken && storedUser && storedUser !== 'undefined' && storedUser !== 'null' && storedUser.trim() !== '') {
         try {
           const parsedUser = JSON.parse(storedUser);
-          if (parsedUser && typeof parsedUser === 'object') {
+          if (parsedUser && typeof parsedUser === 'object' && parsedUser.id) {
             setToken(storedToken);
             setUser(parsedUser);
             axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
@@ -56,8 +57,8 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
-      } else if (storedUser === 'undefined' || storedUser === 'null') {
-        // Clean up invalid data
+      } else {
+        // Clean up any invalid data
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
