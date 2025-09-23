@@ -4,6 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
+from contextlib import asynccontextmanager
 from app.core.database import get_db, engine
 from app.models.models import Base
 from app.middleware.middleware import add_all_middleware
@@ -11,6 +12,19 @@ import app.crud.crud as crud
 import app.schemas.schemas as schemas
 import uvicorn
 import asyncio
+
+# Lifespan event handler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully!")
+    except Exception as e:
+        print(f"❌ Error creating database tables: {e}")
+    yield
+    # Shutdown (if needed)
+    pass
 
 # Create FastAPI app
 app = FastAPI(
@@ -36,21 +50,6 @@ add_all_middleware(app)
 
 # Security
 security = HTTPBearer(auto_error=False)
-
-# Lifespan event handler
-from contextlib import asynccontextmanager
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully!")
-    except Exception as e:
-        print(f"❌ Error creating database tables: {e}")
-    yield
-    # Shutdown (if needed)
-    pass
 
 @app.get("/")
 async def root():
