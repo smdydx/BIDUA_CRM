@@ -57,6 +57,19 @@ class PayrollStatus(enum.Enum):
     PROCESSED = "processed"
     PAID = "paid"
 
+class TaskStatus(enum.Enum):
+    TODO = "todo"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+class ProjectStatus(enum.Enum):
+    PLANNING = "planning"
+    ACTIVE = "active"
+    ON_HOLD = "on_hold"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
 # Core User Management
 class Users(Base):
     __tablename__ = "users"
@@ -125,15 +138,49 @@ class Employees(Base):
     gender = Column(String(10))
     marital_status = Column(String(20))
     address = Column(Text)
+    city = Column(String(100))
+    state = Column(String(100))
+    country = Column(String(100))
+    postal_code = Column(String(20))
     emergency_contact = Column(String(100))
     emergency_phone = Column(String(20))
+    emergency_relationship = Column(String(50))
+    blood_group = Column(String(10))
+    nationality = Column(String(100))
+    
+    # Official Documents
+    aadhar_number = Column(String(20))  # Indian ID
+    pan_number = Column(String(20))     # Indian Tax ID
+    passport_number = Column(String(50))
+    driving_license = Column(String(50))
+    
+    # Bank Details
+    bank_name = Column(String(100))
+    bank_account_number = Column(String(50))
+    bank_ifsc_code = Column(String(20))
+    bank_branch = Column(String(100))
     
     # Employment Details
     hire_date = Column(Date, nullable=False)
+    probation_period_months = Column(Integer, default=6)
+    confirmation_date = Column(Date)
     employment_type = Column(String(20))  # Full-time, Part-time, Contract
+    work_location = Column(String(100))
+    shift_timing = Column(String(50))
     status = Column(Enum(EmployeeStatus), default=EmployeeStatus.ACTIVE)
     salary = Column(Decimal(10, 2))
     termination_date = Column(Date)
+    termination_reason = Column(Text)
+    
+    # Skills and Qualifications
+    skills = Column(Text)  # JSON string
+    education = Column(Text)  # JSON string
+    certifications = Column(Text)  # JSON string
+    experience_years = Column(Integer)
+    
+    # Profile
+    profile_picture_url = Column(String(500))
+    biography = Column(Text)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -162,8 +209,22 @@ class Companies(Base):
     phone = Column(String(20))
     email = Column(String(100))
     address = Column(Text)
+    city = Column(String(100))
+    state = Column(String(100))
+    country = Column(String(100))
+    postal_code = Column(String(20))
     annual_revenue = Column(Decimal(15, 2))
+    employee_count = Column(Integer)
     description = Column(Text)
+    logo_url = Column(String(500))
+    linkedin_url = Column(String(255))
+    facebook_url = Column(String(255))
+    twitter_url = Column(String(255))
+    gst_number = Column(String(50))  # For Indian businesses
+    pan_number = Column(String(20))  # For Indian businesses
+    company_registration_number = Column(String(100))
+    is_active = Column(Boolean, default=True)
+    tags = Column(Text)  # JSON string for tags
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -404,6 +465,245 @@ class SystemSettings(Base):
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+# Project Management
+class Projects(Base):
+    __tablename__ = "projects"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    company_id = Column(Integer, ForeignKey("companies.id"))
+    manager_id = Column(Integer, ForeignKey("users.id"))
+    
+    start_date = Column(Date)
+    end_date = Column(Date)
+    budget = Column(Decimal(12, 2))
+    status = Column(Enum(ProjectStatus), default=ProjectStatus.PLANNING)
+    priority = Column(String(20), default="medium")  # low, medium, high, urgent
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    company = relationship("Companies")
+    manager = relationship("Users")
+    tasks = relationship("Tasks", back_populates="project")
+
+class Tasks(Base):
+    __tablename__ = "tasks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    assigned_to_id = Column(Integer, ForeignKey("users.id"))
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    
+    start_date = Column(Date)
+    due_date = Column(Date)
+    completed_date = Column(Date)
+    status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
+    priority = Column(String(20), default="medium")
+    estimated_hours = Column(Decimal(5, 2))
+    actual_hours = Column(Decimal(5, 2))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    project = relationship("Projects", back_populates="tasks")
+    assigned_to = relationship("Users", foreign_keys=[assigned_to_id])
+    created_by = relationship("Users", foreign_keys=[created_by_id])
+
+# Document Management
+class Documents(Base):
+    __tablename__ = "documents"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    file_name = Column(String(255), nullable=False)
+    file_path = Column(String(500), nullable=False)
+    file_size = Column(Integer)
+    mime_type = Column(String(100))
+    
+    # Related entities
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    company_id = Column(Integer, ForeignKey("companies.id"))
+    deal_id = Column(Integer, ForeignKey("deals.id"))
+    
+    # Document categories
+    category = Column(String(50))  # contract, resume, certificate, etc.
+    is_confidential = Column(Boolean, default=False)
+    
+    uploaded_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    company = relationship("Companies")
+    deal = relationship("Deals")
+    uploaded_by = relationship("Users")
+
+# Performance Management
+class PerformanceReviews(Base):
+    __tablename__ = "performance_reviews"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    reviewer_id = Column(Integer, ForeignKey("users.id"))
+    
+    review_period_start = Column(Date, nullable=False)
+    review_period_end = Column(Date, nullable=False)
+    
+    # Ratings (1-5 scale)
+    overall_rating = Column(Integer)
+    technical_skills = Column(Integer)
+    communication_skills = Column(Integer)
+    teamwork = Column(Integer)
+    leadership = Column(Integer)
+    punctuality = Column(Integer)
+    
+    # Comments
+    strengths = Column(Text)
+    areas_for_improvement = Column(Text)
+    goals_next_period = Column(Text)
+    reviewer_comments = Column(Text)
+    employee_comments = Column(Text)
+    
+    status = Column(String(20), default="draft")  # draft, submitted, approved
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    reviewer = relationship("Users")
+
+# Training Management
+class TrainingPrograms(Base):
+    __tablename__ = "training_programs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    trainer_name = Column(String(100))
+    
+    start_date = Column(Date)
+    end_date = Column(Date)
+    duration_hours = Column(Integer)
+    max_participants = Column(Integer)
+    cost_per_participant = Column(Decimal(10, 2))
+    
+    is_mandatory = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    enrollments = relationship("TrainingEnrollments", back_populates="program")
+
+class TrainingEnrollments(Base):
+    __tablename__ = "training_enrollments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    program_id = Column(Integer, ForeignKey("training_programs.id"))
+    
+    enrollment_date = Column(Date, nullable=False)
+    completion_date = Column(Date)
+    status = Column(String(20), default="enrolled")  # enrolled, completed, cancelled
+    score = Column(Integer)  # If there's an assessment
+    certificate_url = Column(String(500))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    program = relationship("TrainingPrograms", back_populates="enrollments")
+
+# Expense Management
+class ExpenseCategories(Base):
+    __tablename__ = "expense_categories"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False, unique=True)
+    description = Column(Text)
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    expenses = relationship("Expenses", back_populates="category")
+
+class Expenses(Base):
+    __tablename__ = "expenses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    category_id = Column(Integer, ForeignKey("expense_categories.id"))
+    
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    amount = Column(Decimal(10, 2), nullable=False)
+    expense_date = Column(Date, nullable=False)
+    
+    receipt_url = Column(String(500))
+    status = Column(String(20), default="pending")  # pending, approved, rejected, paid
+    
+    approved_by_id = Column(Integer, ForeignKey("users.id"))
+    approval_date = Column(Date)
+    approval_comments = Column(Text)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    category = relationship("ExpenseCategories", back_populates="expenses")
+    approved_by = relationship("Users")
+
+# Communication & Notifications
+class Notifications(Base):
+    __tablename__ = "notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    title = Column(String(200), nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String(50))  # info, warning, success, error
+    
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime(timezone=True))
+    
+    # Optional related entity
+    related_entity_type = Column(String(50))  # lead, deal, employee, etc.
+    related_entity_id = Column(Integer)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+# Sales Targets
+class SalesTargets(Base):
+    __tablename__ = "sales_targets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    
+    target_period = Column(String(20))  # monthly, quarterly, yearly
+    target_year = Column(Integer, nullable=False)
+    target_month = Column(Integer)  # For monthly targets
+    target_quarter = Column(Integer)  # For quarterly targets
+    
+    target_amount = Column(Decimal(12, 2), nullable=False)
+    achieved_amount = Column(Decimal(12, 2), default=0)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("Users")
 
 # Audit Trail
 class AuditLog(Base):

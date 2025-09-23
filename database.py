@@ -3,20 +3,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Database URL from environment variable
-DATABASE_URL = os.getenv("DATABASE_URL")
+# SQLite database configuration
+DATABASE_URL = "sqlite:///./crm_hrms.db"
 
-if not DATABASE_URL:
-    # Fallback for development
-    DATABASE_URL = "postgresql://username:password@localhost/crm_hrms_db"
-
-# Create engine with optimized settings
+# Create engine with SQLite optimized settings
 engine = create_engine(
     DATABASE_URL,
-    pool_size=10,
-    max_overflow=20,
-    pool_pre_ping=True,
-    pool_recycle=300,
+    connect_args={"check_same_thread": False},  # SQLite specific
     echo=False  # Set to True for debugging
 )
 
