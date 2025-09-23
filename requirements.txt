@@ -75,3 +75,13 @@ redis==5.0.1
 sqlalchemy==2.0.23
 starlette
 uvicorn[standard]==0.24.0
+bcrypt
+fastapi
+passlib[bcrypt]
+psycopg2-binary
+pydantic[email]
+python-dotenv
+python-jose[cryptography]
+python-multipart
+sqlalchemy
+uvicorn
