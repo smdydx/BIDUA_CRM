@@ -1,0 +1,43 @@
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn&#x27;t have a dependency array, or one of the dependencies changes on every render.
+    at Navigate (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94646:5)
+    at ProtectedRoute (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:135662:3)
+    at RenderedRoute (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94038:5)
+    at Routes (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94772:5)
+    at main
+    at https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:909:66
+    at Box (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:29154:72)
+    at div
+    at https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:909:66
+    at Box (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:29154:72)
+    at AppContent (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:128231:70)
+    at AuthProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:136254:3)
+    at Router (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94706:15)
+    at BrowserRouter (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:92607:5)
+    at DefaultPropsProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:28421:3)
+    at RtlProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:28591:7)
+    at ThemeProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:27236:5)
+    at ThemeProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:28680:5)
+    at ThemeProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:25828:14)
+    at App
+Warning: Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn&#x27;t have a dependency array, or one of the dependencies changes on every render.
+    at Navigate (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94646:5)
+    at RenderedRoute (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94038:5)
+    at Routes (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94772:5)
+    at main
+    at https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:909:66
+    at Box (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:29154:72)
+    at div
+    at https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:909:66
+    at Box (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:29154:72)
+    at AppContent (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:128231:70)
+    at AuthProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:136254:3)
+    at Router (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:94706:15)
+    at BrowserRouter (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:92607:5)
+    at DefaultPropsProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:28421:3)
+    at RtlProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:28591:7)
+    at ThemeProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:27236:5)
+    at ThemeProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:28680:5)
+    at ThemeProvider (https://ba2ec098-b4f7-4ead-98e5-062c4fd20fb7-00-2n1pyovn5wj5o.kirk.replit.dev/static/js/bundle.js:25828:14)
+    at App
