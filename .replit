@@ -4,7 +4,7 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["libiconv", "libxcrypt"]
+packages = ["libiconv", "libxcrypt", "nodejs-18_x", "npm"]
 
 [workflows]
 runButton = "Project"
