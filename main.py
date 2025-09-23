@@ -12,6 +12,7 @@ from sqlalchemy import text
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 import uvicorn
 import os
@@ -124,7 +125,7 @@ def get_password_hash(password):
     """Hash password"""
     return pwd_context.hash(password)
 
-def create_access_token(data: dict, expires_delta: timedelta = None):
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create JWT access token"""
     to_encode = data.copy()
     if expires_delta:
@@ -139,7 +140,7 @@ def verify_token(token: str):
     """Verify JWT token and return user data"""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
+        username: Optional[str] = payload.get("sub")
         if username is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
