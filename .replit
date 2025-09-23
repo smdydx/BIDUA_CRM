@@ -1,5 +1,5 @@
 [workflows]
-runButton = "Install Dependencies and Run"
+runButton = "Run CRM HRMS"
 
 [[workflows.workflow]]
 name = "Run FastAPI Server"
@@ -18,6 +18,19 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pip install -r requirements.txt"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 create_tables.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 main.py"
+
+[[workflows.workflow]]
+name = "Run CRM HRMS"
+author = 47912742
+mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
