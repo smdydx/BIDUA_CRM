@@ -140,7 +140,7 @@ class Users(Base):
     
     # Relationships
     employee = relationship("Employees", back_populates="user", uselist=False)
-    created_leads = relationship("Leads", back_populates="created_by")
+    created_leads = relationship("Leads", foreign_keys="Leads.created_by_id", back_populates="created_by")
     assigned_leads = relationship("Leads", foreign_keys="Leads.assigned_to_id", back_populates="assigned_to")
 
 # Company Structure
