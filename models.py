@@ -1211,3 +1211,1398 @@ class AuditLog(Base):
     
     # Relationships
     user = relationship("Users")
+
+# ============================================================================
+# ADVANCED SECURITY & ACCESS CONTROL
+# ============================================================================
+
+class Permissions(Base):
+    __tablename__ = "permissions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    description = Column(Text)
+    module = Column(String(50), nullable=False)  # CRM, HR, Project, etc.
+    action = Column(String(50), nullable=False)  # create, read, update, delete, export
+    resource = Column(String(50), nullable=False)  # leads, employees, projects
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class RolePermissions(Base):
+    __tablename__ = "role_permissions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    role = Column(Enum(UserRole), nullable=False)
+    permission_id = Column(Integer, ForeignKey("permissions.id"))
+    is_granted = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    permission = relationship("Permissions")
+
+class UserSessions(Base):
+    __tablename__ = "user_sessions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    session_token = Column(String(255), unique=True, nullable=False)
+    ip_address = Column(String(45))
+    user_agent = Column(String(500))
+    location = Column(String(200))  # City, Country
+    device_type = Column(String(50))  # Desktop, Mobile, Tablet
+    browser = Column(String(100))
+    
+    is_active = Column(Boolean, default=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    last_activity = Column(DateTime(timezone=True))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class TwoFactorAuth(Base):
+    __tablename__ = "two_factor_auth"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    secret_key = Column(String(255), nullable=False)
+    is_enabled = Column(Boolean, default=False)
+    backup_codes = Column(Text)  # JSON array of backup codes
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_used = Column(DateTime(timezone=True))
+    
+    # Relationships
+    user = relationship("Users")
+
+class IPRestrictions(Base):
+    __tablename__ = "ip_restrictions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    ip_address = Column(String(45), nullable=False)
+    ip_range = Column(String(100))  # CIDR notation for ranges
+    description = Column(String(200))
+    is_allowed = Column(Boolean, default=True)  # True=whitelist, False=blacklist
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class PasswordPolicies(Base):
+    __tablename__ = "password_policies"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), unique=True, nullable=False)
+    min_length = Column(Integer, default=8)
+    require_uppercase = Column(Boolean, default=True)
+    require_lowercase = Column(Boolean, default=True)
+    require_numbers = Column(Boolean, default=True)
+    require_special_chars = Column(Boolean, default=True)
+    max_age_days = Column(Integer, default=90)  # Password expiry
+    history_count = Column(Integer, default=5)  # Prevent reuse of last N passwords
+    max_failed_attempts = Column(Integer, default=5)
+    lockout_duration_minutes = Column(Integer, default=30)
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class PasswordHistory(Base):
+    __tablename__ = "password_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    password_hash = Column(String(255), nullable=False)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class LoginAttempts(Base):
+    __tablename__ = "login_attempts"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    ip_address = Column(String(45))
+    user_agent = Column(String(500))
+    is_successful = Column(Boolean, default=False)
+    failure_reason = Column(String(100))  # invalid_password, account_locked, etc.
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+# ============================================================================
+# INTERNAL COMMUNICATION SYSTEM
+# ============================================================================
+
+class Teams(Base):
+    __tablename__ = "teams"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    team_type = Column(String(50), default="department")  # department, project, temporary
+    is_public = Column(Boolean, default=True)  # Public teams anyone can join
+    max_members = Column(Integer)
+    
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    created_by = relationship("Users")
+
+class TeamMembers(Base):
+    __tablename__ = "team_members"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    role = Column(String(20), default="member")  # admin, moderator, member
+    joined_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_active = Column(Boolean, default=True)
+    
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint('team_id', 'user_id', name='unique_team_member'),
+    )
+    
+    # Relationships
+    team = relationship("Teams")
+    user = relationship("Users")
+
+class Channels(Base):
+    __tablename__ = "channels"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    channel_type = Column(String(20), default="public")  # public, private, direct
+    is_archived = Column(Boolean, default=False)
+    
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    team = relationship("Teams")
+    created_by = relationship("Users")
+
+class Messages(Base):
+    __tablename__ = "messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    channel_id = Column(Integer, ForeignKey("channels.id"))
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    parent_message_id = Column(Integer, ForeignKey("messages.id"))  # For threaded replies
+    
+    content = Column(Text, nullable=False)
+    message_type = Column(String(20), default="text")  # text, file, image, system
+    
+    # File attachments
+    file_url = Column(String(500))
+    file_name = Column(String(255))
+    file_size = Column(Integer)
+    
+    # Message status
+    is_edited = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False)
+    edited_at = Column(DateTime(timezone=True))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    channel = relationship("Channels")
+    sender = relationship("Users")
+    parent_message = relationship("Messages", remote_side=[id])
+
+class MessageReactions(Base):
+    __tablename__ = "message_reactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    emoji = Column(String(10), nullable=False)  # 👍, ❤️, 😄, etc.
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint('message_id', 'user_id', 'emoji', name='unique_message_reaction'),
+    )
+    
+    # Relationships
+    message = relationship("Messages")
+    user = relationship("Users")
+
+class DirectMessages(Base):
+    __tablename__ = "direct_messages"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id"))
+    recipient_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(Text, nullable=False)
+    
+    # File attachments
+    file_url = Column(String(500))
+    file_name = Column(String(255))
+    
+    is_read = Column(Boolean, default=False)
+    read_at = Column(DateTime(timezone=True))
+    is_deleted = Column(Boolean, default=False)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    sender = relationship("Users", foreign_keys=[sender_id])
+    recipient = relationship("Users", foreign_keys=[recipient_id])
+
+class VideoMeetings(Base):
+    __tablename__ = "video_meetings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+    meeting_url = Column(String(500))
+    meeting_id = Column(String(100))
+    password = Column(String(50))
+    
+    # Scheduling
+    scheduled_start = Column(DateTime(timezone=True), nullable=False)
+    scheduled_end = Column(DateTime(timezone=True), nullable=False)
+    actual_start = Column(DateTime(timezone=True))
+    actual_end = Column(DateTime(timezone=True))
+    
+    # Settings
+    max_participants = Column(Integer, default=50)
+    is_recording_enabled = Column(Boolean, default=False)
+    waiting_room_enabled = Column(Boolean, default=True)
+    
+    # Status
+    status = Column(String(20), default="scheduled")  # scheduled, in_progress, ended, cancelled
+    
+    host_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    host = relationship("Users")
+
+class MeetingParticipants(Base):
+    __tablename__ = "meeting_participants"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    meeting_id = Column(Integer, ForeignKey("video_meetings.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    
+    joined_at = Column(DateTime(timezone=True))
+    left_at = Column(DateTime(timezone=True))
+    duration_minutes = Column(Integer)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    meeting = relationship("VideoMeetings")
+    user = relationship("Users")
+
+class Announcements(Base):
+    __tablename__ = "announcements"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    announcement_type = Column(String(50), default="general")  # general, urgent, policy, event
+    
+    # Targeting
+    target_audience = Column(String(50), default="all")  # all, department, role, team
+    target_department_id = Column(Integer, ForeignKey("departments.id"))
+    target_role = Column(Enum(UserRole))
+    target_team_id = Column(Integer, ForeignKey("teams.id"))
+    
+    # Settings
+    is_pinned = Column(Boolean, default=False)
+    expires_at = Column(DateTime(timezone=True))
+    requires_acknowledgment = Column(Boolean, default=False)
+    
+    # Status
+    is_published = Column(Boolean, default=False)
+    published_at = Column(DateTime(timezone=True))
+    
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    created_by = relationship("Users")
+    target_department = relationship("Departments")
+    target_team = relationship("Teams")
+
+class AnnouncementAcknowledgments(Base):
+    __tablename__ = "announcement_acknowledgments"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    announcement_id = Column(Integer, ForeignKey("announcements.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    acknowledged_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Unique constraint
+    __table_args__ = (
+        UniqueConstraint('announcement_id', 'user_id', name='unique_announcement_ack'),
+    )
+    
+    # Relationships
+    announcement = relationship("Announcements")
+    user = relationship("Users")
+
+# ============================================================================
+# WORKFLOW AUTOMATION
+# ============================================================================
+
+class WorkflowTemplates(Base):
+    __tablename__ = "workflow_templates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50))  # HR, CRM, Project, Finance
+    trigger_type = Column(String(50), nullable=False)  # manual, scheduled, event_based
+    trigger_config = Column(Text)  # JSON configuration for triggers
+    
+    is_active = Column(Boolean, default=True)
+    is_system_template = Column(Boolean, default=False)
+    
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    created_by = relationship("Users")
+
+class WorkflowSteps(Base):
+    __tablename__ = "workflow_steps"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_template_id = Column(Integer, ForeignKey("workflow_templates.id"))
+    step_number = Column(Integer, nullable=False)
+    step_name = Column(String(200), nullable=False)
+    step_type = Column(String(50), nullable=False)  # approval, email, task_create, data_update
+    step_config = Column(Text, nullable=False)  # JSON configuration
+    
+    # Conditions
+    condition_type = Column(String(50), default="always")  # always, conditional
+    condition_config = Column(Text)  # JSON condition configuration
+    
+    # Error handling
+    on_error = Column(String(50), default="stop")  # stop, continue, retry
+    retry_count = Column(Integer, default=0)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    workflow_template = relationship("WorkflowTemplates")
+
+class WorkflowInstances(Base):
+    __tablename__ = "workflow_instances"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_template_id = Column(Integer, ForeignKey("workflow_templates.id"))
+    triggered_by_id = Column(Integer, ForeignKey("users.id"))
+    
+    # Context
+    entity_type = Column(String(50))  # lead, employee, deal, etc.
+    entity_id = Column(Integer)
+    context_data = Column(Text)  # JSON data for workflow context
+    
+    # Status
+    status = Column(String(20), default="running")  # running, completed, failed, cancelled
+    current_step = Column(Integer, default=1)
+    
+    started_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True))
+    
+    # Relationships
+    workflow_template = relationship("WorkflowTemplates")
+    triggered_by = relationship("Users")
+
+class WorkflowExecutions(Base):
+    __tablename__ = "workflow_executions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_instance_id = Column(Integer, ForeignKey("workflow_instances.id"))
+    step_id = Column(Integer, ForeignKey("workflow_steps.id"))
+    
+    # Execution details
+    status = Column(String(20), default="pending")  # pending, running, completed, failed
+    input_data = Column(Text)  # JSON input data
+    output_data = Column(Text)  # JSON output data
+    error_message = Column(Text)
+    
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    
+    # Relationships
+    workflow_instance = relationship("WorkflowInstances")
+    step = relationship("WorkflowSteps")
+
+class ApprovalWorkflows(Base):
+    __tablename__ = "approval_workflows"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    entity_type = Column(String(50), nullable=False)  # leave_request, expense, deal
+    
+    # Approval chain configuration
+    approval_levels = Column(Integer, default=1)
+    is_sequential = Column(Boolean, default=True)  # Sequential vs parallel approval
+    require_all_approvers = Column(Boolean, default=True)
+    
+    # Auto-approval conditions
+    auto_approval_conditions = Column(Text)  # JSON conditions for auto-approval
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class ApprovalSteps(Base):
+    __tablename__ = "approval_steps"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(Integer, ForeignKey("approval_workflows.id"))
+    step_level = Column(Integer, nullable=False)
+    approver_type = Column(String(50), nullable=False)  # user, role, manager, department_head
+    approver_id = Column(Integer, ForeignKey("users.id"))
+    approver_role = Column(Enum(UserRole))
+    
+    # Conditions
+    conditions = Column(Text)  # JSON conditions when this step applies
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    workflow = relationship("ApprovalWorkflows")
+    approver = relationship("Users")
+
+class ApprovalRequests(Base):
+    __tablename__ = "approval_requests"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    workflow_id = Column(Integer, ForeignKey("approval_workflows.id"))
+    entity_type = Column(String(50), nullable=False)
+    entity_id = Column(Integer, nullable=False)
+    
+    requested_by_id = Column(Integer, ForeignKey("users.id"))
+    current_step = Column(Integer, default=1)
+    status = Column(String(20), default="pending")  # pending, approved, rejected, cancelled
+    
+    # Request data
+    request_data = Column(Text)  # JSON data of the request
+    justification = Column(Text)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True))
+    
+    # Relationships
+    workflow = relationship("ApprovalWorkflows")
+    requested_by = relationship("Users")
+
+class ApprovalActions(Base):
+    __tablename__ = "approval_actions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    approval_request_id = Column(Integer, ForeignKey("approval_requests.id"))
+    step_level = Column(Integer, nullable=False)
+    approver_id = Column(Integer, ForeignKey("users.id"))
+    
+    action = Column(String(20), nullable=False)  # approved, rejected, delegated
+    comments = Column(Text)
+    delegated_to_id = Column(Integer, ForeignKey("users.id"))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    approval_request = relationship("ApprovalRequests")
+    approver = relationship("Users", foreign_keys=[approver_id])
+    delegated_to = relationship("Users", foreign_keys=[delegated_to_id])
+
+class EmailAutomation(Base):
+    __tablename__ = "email_automation"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    trigger_event = Column(String(100), nullable=False)  # lead_created, deal_won, employee_joined
+    
+    # Email settings
+    template_id = Column(Integer, ForeignKey("email_templates.id"))
+    sender_email = Column(String(100))
+    sender_name = Column(String(100))
+    
+    # Trigger conditions
+    conditions = Column(Text)  # JSON conditions
+    delay_minutes = Column(Integer, default=0)  # Delay before sending
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    template = relationship("EmailTemplates")
+
+class AutomatedEmails(Base):
+    __tablename__ = "automated_emails"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    automation_id = Column(Integer, ForeignKey("email_automation.id"))
+    recipient_email = Column(String(100), nullable=False)
+    recipient_name = Column(String(100))
+    
+    # Trigger context
+    trigger_entity_type = Column(String(50))
+    trigger_entity_id = Column(Integer)
+    
+    # Email content (after template processing)
+    subject = Column(String(200), nullable=False)
+    body = Column(Text, nullable=False)
+    
+    # Status
+    status = Column(String(20), default="queued")  # queued, sent, failed, cancelled
+    sent_at = Column(DateTime(timezone=True))
+    error_message = Column(Text)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    automation = relationship("EmailAutomation")
+
+# ============================================================================
+# ADVANCED ANALYTICS & REPORTING
+# ============================================================================
+
+class CustomDashboards(Base):
+    __tablename__ = "custom_dashboards"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    layout_config = Column(Text, nullable=False)  # JSON layout configuration
+    
+    # Access control
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    is_public = Column(Boolean, default=False)
+    allowed_roles = Column(Text)  # JSON array of allowed roles
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    created_by = relationship("Users")
+
+class DashboardWidgets(Base):
+    __tablename__ = "dashboard_widgets"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    dashboard_id = Column(Integer, ForeignKey("custom_dashboards.id"))
+    widget_type = Column(String(50), nullable=False)  # chart, table, metric, progress
+    widget_title = Column(String(200), nullable=False)
+    
+    # Position and size
+    position_x = Column(Integer, default=0)
+    position_y = Column(Integer, default=0)
+    width = Column(Integer, default=1)
+    height = Column(Integer, default=1)
+    
+    # Widget configuration
+    data_source = Column(String(100), nullable=False)  # Table or view name
+    query_config = Column(Text, nullable=False)  # JSON query configuration
+    chart_config = Column(Text)  # JSON chart styling configuration
+    refresh_interval = Column(Integer, default=300)  # Refresh interval in seconds
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    dashboard = relationship("CustomDashboards")
+
+class KPIs(Base):
+    __tablename__ = "kpis"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50), nullable=False)  # sales, hr, finance, project
+    
+    # KPI calculation
+    calculation_method = Column(String(50), nullable=False)  # sum, average, count, percentage
+    data_source = Column(String(100), nullable=False)
+    calculation_config = Column(Text, nullable=False)  # JSON calculation configuration
+    
+    # Target and thresholds
+    target_value = Column(Numeric(15, 2))
+    warning_threshold = Column(Numeric(15, 2))
+    critical_threshold = Column(Numeric(15, 2))
+    
+    # Display settings
+    unit = Column(String(20))  # %, $, units, etc.
+    decimal_places = Column(Integer, default=2)
+    
+    is_active = Column(Boolean, default=True)
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    created_by = relationship("Users")
+
+class KPIValues(Base):
+    __tablename__ = "kpi_values"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    kpi_id = Column(Integer, ForeignKey("kpis.id"))
+    
+    # Time period
+    period_type = Column(String(20), nullable=False)  # daily, weekly, monthly, quarterly, yearly
+    period_start = Column(Date, nullable=False)
+    period_end = Column(Date, nullable=False)
+    
+    # Values
+    actual_value = Column(Numeric(15, 2), nullable=False)
+    target_value = Column(Numeric(15, 2))
+    previous_value = Column(Numeric(15, 2))  # For comparison
+    
+    # Calculated metrics
+    variance_amount = Column(Numeric(15, 2))
+    variance_percentage = Column(Numeric(5, 2))
+    trend = Column(String(20))  # up, down, stable
+    
+    calculated_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    kpi = relationship("KPIs")
+
+class ReportTemplates(Base):
+    __tablename__ = "report_templates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50), nullable=False)  # sales, hr, finance, custom
+    
+    # Report configuration
+    data_sources = Column(Text, nullable=False)  # JSON array of tables/views
+    query_config = Column(Text, nullable=False)  # JSON query configuration
+    filters_config = Column(Text)  # JSON available filters configuration
+    
+    # Output settings
+    output_format = Column(String(20), default="pdf")  # pdf, excel, csv
+    page_orientation = Column(String(20), default="portrait")  # portrait, landscape
+    include_charts = Column(Boolean, default=True)
+    
+    # Access control
+    created_by_id = Column(Integer, ForeignKey("users.id"))
+    is_public = Column(Boolean, default=False)
+    allowed_roles = Column(Text)  # JSON array of allowed roles
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    created_by = relationship("Users")
+
+class GeneratedReports(Base):
+    __tablename__ = "generated_reports"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    template_id = Column(Integer, ForeignKey("report_templates.id"))
+    report_name = Column(String(200), nullable=False)
+    
+    # Generation details
+    generated_by_id = Column(Integer, ForeignKey("users.id"))
+    filter_params = Column(Text)  # JSON parameters used for generation
+    
+    # File details
+    file_path = Column(String(500))
+    file_size = Column(Integer)
+    file_format = Column(String(20))
+    
+    # Status
+    status = Column(String(20), default="generating")  # generating, completed, failed
+    error_message = Column(Text)
+    
+    # Analytics
+    download_count = Column(Integer, default=0)
+    last_downloaded = Column(DateTime(timezone=True))
+    
+    generated_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True))  # Auto-delete after expiry
+    
+    # Relationships
+    template = relationship("ReportTemplates")
+    generated_by = relationship("Users")
+
+class DataExports(Base):
+    __tablename__ = "data_exports"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    export_name = Column(String(200), nullable=False)
+    entity_type = Column(String(50), nullable=False)  # leads, employees, deals, etc.
+    
+    # Export configuration
+    columns = Column(Text, nullable=False)  # JSON array of columns to export
+    filters = Column(Text)  # JSON filters applied
+    export_format = Column(String(20), default="csv")  # csv, excel, json
+    
+    # File details
+    file_path = Column(String(500))
+    file_size = Column(Integer)
+    record_count = Column(Integer)
+    
+    # Status
+    status = Column(String(20), default="processing")  # processing, completed, failed
+    progress_percentage = Column(Integer, default=0)
+    error_message = Column(Text)
+    
+    # Request details
+    requested_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at = Column(DateTime(timezone=True))
+    
+    # Relationships
+    requested_by = relationship("Users")
+
+# ============================================================================
+# THIRD-PARTY INTEGRATIONS
+# ============================================================================
+
+class IntegrationSettings(Base):
+    __tablename__ = "integration_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    integration_name = Column(String(100), unique=True, nullable=False)
+    display_name = Column(String(200), nullable=False)
+    description = Column(Text)
+    category = Column(String(50))  # communication, payment, calendar, social
+    
+    # Configuration
+    config_schema = Column(Text, nullable=False)  # JSON schema for configuration
+    current_config = Column(Text)  # JSON current configuration values
+    
+    # Status
+    is_enabled = Column(Boolean, default=False)
+    is_configured = Column(Boolean, default=False)
+    last_sync = Column(DateTime(timezone=True))
+    sync_status = Column(String(20))  # success, error, in_progress
+    
+    # API details
+    api_version = Column(String(20))
+    webhook_url = Column(String(500))
+    webhook_secret = Column(String(255))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class WebhookLogs(Base):
+    __tablename__ = "webhook_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    integration_name = Column(String(100), nullable=False)
+    webhook_event = Column(String(100), nullable=False)
+    
+    # Request details
+    request_headers = Column(Text)  # JSON headers
+    request_body = Column(Text)  # JSON body
+    source_ip = Column(String(45))
+    
+    # Response details
+    response_status = Column(Integer)
+    response_body = Column(Text)
+    processing_time_ms = Column(Integer)
+    
+    # Status
+    is_processed = Column(Boolean, default=False)
+    error_message = Column(Text)
+    
+    received_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Index for performance
+    __table_args__ = (
+        Index('idx_webhook_logs_integration_event', 'integration_name', 'webhook_event'),
+    )
+
+class CalendarSync(Base):
+    __tablename__ = "calendar_sync"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    calendar_provider = Column(String(50), nullable=False)  # google, outlook, apple
+    
+    # Authentication
+    access_token = Column(String(1000))
+    refresh_token = Column(String(1000))
+    expires_at = Column(DateTime(timezone=True))
+    
+    # Calendar details
+    external_calendar_id = Column(String(200))
+    calendar_name = Column(String(200))
+    
+    # Sync settings
+    is_bidirectional = Column(Boolean, default=True)
+    sync_meetings = Column(Boolean, default=True)
+    sync_tasks = Column(Boolean, default=False)
+    last_sync = Column(DateTime(timezone=True))
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class SocialMediaIntegration(Base):
+    __tablename__ = "social_media_integration"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    platform = Column(String(50), nullable=False)  # linkedin, twitter, facebook
+    user_id = Column(Integer, ForeignKey("users.id"))
+    
+    # Authentication
+    access_token = Column(String(1000))
+    refresh_token = Column(String(1000))
+    expires_at = Column(DateTime(timezone=True))
+    
+    # Profile information
+    external_user_id = Column(String(200))
+    username = Column(String(100))
+    profile_url = Column(String(500))
+    
+    # Sync settings
+    auto_post_achievements = Column(Boolean, default=False)
+    sync_contacts = Column(Boolean, default=False)
+    last_sync = Column(DateTime(timezone=True))
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class PaymentGatewaySettings(Base):
+    __tablename__ = "payment_gateway_settings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    gateway_name = Column(String(50), unique=True, nullable=False)  # razorpay, stripe, paypal
+    display_name = Column(String(100), nullable=False)
+    
+    # API Configuration
+    api_key = Column(String(500))
+    api_secret = Column(String(500))
+    webhook_secret = Column(String(255))
+    sandbox_mode = Column(Boolean, default=True)
+    
+    # Gateway settings
+    supported_currencies = Column(Text)  # JSON array of supported currencies
+    default_currency = Column(String(10), default="INR")
+    
+    # Features
+    supports_subscriptions = Column(Boolean, default=False)
+    supports_refunds = Column(Boolean, default=True)
+    supports_webhooks = Column(Boolean, default=True)
+    
+    is_active = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+class PaymentTransactions(Base):
+    __tablename__ = "payment_transactions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    transaction_id = Column(String(100), unique=True, nullable=False)
+    gateway_name = Column(String(50), nullable=False)
+    gateway_transaction_id = Column(String(200))
+    
+    # Transaction details
+    amount = Column(Numeric(12, 2), nullable=False)
+    currency = Column(String(10), default="INR")
+    transaction_type = Column(String(50), nullable=False)  # payment, refund, subscription
+    
+    # Related entities
+    invoice_id = Column(Integer, ForeignKey("invoices.id"))
+    customer_id = Column(Integer, ForeignKey("contacts.id"))
+    
+    # Status
+    status = Column(String(20), default="pending")  # pending, success, failed, cancelled
+    failure_reason = Column(String(200))
+    
+    # Gateway response
+    gateway_response = Column(Text)  # JSON gateway response
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    invoice = relationship("Invoices")
+    customer = relationship("Contacts")
+
+# ============================================================================
+# MOBILE APP SUPPORT
+# ============================================================================
+
+class DeviceRegistrations(Base):
+    __tablename__ = "device_registrations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    device_token = Column(String(500), unique=True, nullable=False)
+    device_type = Column(String(20), nullable=False)  # ios, android
+    device_model = Column(String(100))
+    app_version = Column(String(20))
+    os_version = Column(String(20))
+    
+    # Settings
+    push_notifications_enabled = Column(Boolean, default=True)
+    notification_preferences = Column(Text)  # JSON preferences
+    
+    is_active = Column(Boolean, default=True)
+    last_active = Column(DateTime(timezone=True))
+    
+    registered_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class PushNotifications(Base):
+    __tablename__ = "push_notifications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    device_token = Column(String(500))
+    
+    # Notification content
+    title = Column(String(200), nullable=False)
+    body = Column(Text, nullable=False)
+    notification_type = Column(String(50))  # message, reminder, alert, update
+    
+    # Payload
+    data_payload = Column(Text)  # JSON additional data
+    action_url = Column(String(500))  # Deep link for action
+    
+    # Related entity
+    entity_type = Column(String(50))
+    entity_id = Column(Integer)
+    
+    # Status
+    status = Column(String(20), default="queued")  # queued, sent, delivered, failed
+    sent_at = Column(DateTime(timezone=True))
+    delivered_at = Column(DateTime(timezone=True))
+    error_message = Column(Text)
+    
+    # Analytics
+    is_clicked = Column(Boolean, default=False)
+    clicked_at = Column(DateTime(timezone=True))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class MobileAPILogs(Base):
+    __tablename__ = "mobile_api_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    device_token = Column(String(500))
+    
+    # Request details
+    endpoint = Column(String(200), nullable=False)
+    method = Column(String(10), nullable=False)
+    request_headers = Column(Text)
+    request_body = Column(Text)
+    
+    # Response details
+    response_status = Column(Integer)
+    response_size = Column(Integer)
+    response_time_ms = Column(Integer)
+    
+    # Device info
+    app_version = Column(String(20))
+    device_model = Column(String(100))
+    os_version = Column(String(20))
+    network_type = Column(String(20))  # wifi, cellular, unknown
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    user = relationship("Users")
+
+class OfflineSync(Base):
+    __tablename__ = "offline_sync"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    device_token = Column(String(500))
+    
+    # Sync details
+    entity_type = Column(String(50), nullable=False)  # contacts, tasks, attendance
+    entity_id = Column(Integer, nullable=False)
+    action = Column(String(20), nullable=False)  # create, update, delete
+    
+    # Data
+    sync_data = Column(Text, nullable=False)  # JSON data to sync
+    conflict_resolution = Column(String(20), default="server_wins")  # server_wins, client_wins, manual
+    
+    # Status
+    status = Column(String(20), default="pending")  # pending, synced, conflict, failed
+    error_message = Column(Text)
+    
+    # Timestamps
+    client_timestamp = Column(DateTime(timezone=True), nullable=False)
+    server_timestamp = Column(DateTime(timezone=True), server_default=func.now())
+    synced_at = Column(DateTime(timezone=True))
+    
+    # Relationships
+    user = relationship("Users")
+
+class GPSAttendance(Base):
+    __tablename__ = "gps_attendance"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    attendance_id = Column(Integer, ForeignKey("attendance.id"))
+    
+    # GPS location
+    latitude = Column(Numeric(10, 8), nullable=False)
+    longitude = Column(Numeric(11, 8), nullable=False)
+    accuracy_meters = Column(Numeric(8, 2))
+    address = Column(String(500))
+    
+    # Verification
+    is_within_geofence = Column(Boolean, default=False)
+    distance_from_office_meters = Column(Integer)
+    office_location_id = Column(Integer, ForeignKey("office_locations.id"))
+    
+    # Device info
+    device_info = Column(Text)  # JSON device information
+    
+    recorded_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    attendance = relationship("Attendance")
+
+class OfficeLocations(Base):
+    __tablename__ = "office_locations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    address = Column(Text, nullable=False)
+    
+    # GPS coordinates
+    latitude = Column(Numeric(10, 8), nullable=False)
+    longitude = Column(Numeric(11, 8), nullable=False)
+    
+    # Geofence settings
+    geofence_radius_meters = Column(Integer, default=100)
+    is_active = Column(Boolean, default=True)
+    
+    # Working hours
+    working_hours_config = Column(Text)  # JSON working hours for this location
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+# ============================================================================
+# ADVANCED HR FEATURES
+# ============================================================================
+
+class JobPostings(Base):
+    __tablename__ = "job_postings"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+    department_id = Column(Integer, ForeignKey("departments.id"))
+    designation_id = Column(Integer, ForeignKey("designations.id"))
+    
+    # Job details
+    employment_type = Column(String(20), default="Full-time")  # Full-time, Part-time, Contract
+    experience_required = Column(String(50))  # 0-1 years, 2-5 years, etc.
+    salary_range_min = Column(Numeric(10, 2))
+    salary_range_max = Column(Numeric(10, 2))
+    
+    # Requirements
+    skills_required = Column(Text)  # JSON array of required skills
+    qualifications = Column(Text)  # JSON array of qualifications
+    responsibilities = Column(Text)
+    benefits = Column(Text)
+    
+    # Application settings
+    application_deadline = Column(Date)
+    max_applications = Column(Integer)
+    is_remote_allowed = Column(Boolean, default=False)
+    
+    # Status
+    status = Column(String(20), default="draft")  # draft, published, closed, cancelled
+    published_at = Column(DateTime(timezone=True))
+    
+    # Posting details
+    posted_by_id = Column(Integer, ForeignKey("users.id"))
+    hiring_manager_id = Column(Integer, ForeignKey("users.id"))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    department = relationship("Departments")
+    designation = relationship("Designations")
+    posted_by = relationship("Users", foreign_keys=[posted_by_id])
+    hiring_manager = relationship("Users", foreign_keys=[hiring_manager_id])
+
+class JobApplications(Base):
+    __tablename__ = "job_applications"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    job_posting_id = Column(Integer, ForeignKey("job_postings.id"))
+    
+    # Applicant details
+    first_name = Column(String(50), nullable=False)
+    last_name = Column(String(50), nullable=False)
+    email = Column(String(100), nullable=False)
+    phone = Column(String(20))
+    
+    # Resume and documents
+    resume_url = Column(String(500))
+    cover_letter = Column(Text)
+    portfolio_url = Column(String(500))
+    
+    # Application details
+    current_salary = Column(Numeric(10, 2))
+    expected_salary = Column(Numeric(10, 2))
+    notice_period_days = Column(Integer)
+    available_from = Column(Date)
+    
+    # Screening
+    application_source = Column(String(50))  # website, linkedin, referral
+    referrer_employee_id = Column(Integer, ForeignKey("employees.id"))
+    
+    # Status tracking
+    status = Column(String(20), default="applied")  # applied, screening, interview, selected, rejected
+    stage = Column(String(50))  # phone_screen, technical_round, hr_round, final_round
+    
+    # Review
+    reviewer_notes = Column(Text)
+    rating = Column(Integer)  # 1-5 rating
+    rejection_reason = Column(String(200))
+    
+    applied_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    job_posting = relationship("JobPostings")
+    referrer = relationship("Employees")
+
+class InterviewSchedules(Base):
+    __tablename__ = "interview_schedules"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    job_application_id = Column(Integer, ForeignKey("job_applications.id"))
+    interview_round = Column(String(50), nullable=False)  # phone_screen, technical, hr, final
+    
+    # Scheduling
+    scheduled_date = Column(Date, nullable=False)
+    scheduled_time = Column(Time, nullable=False)
+    duration_minutes = Column(Integer, default=60)
+    
+    # Location/Method
+    interview_type = Column(String(20), default="in_person")  # in_person, video, phone
+    location = Column(String(200))
+    meeting_link = Column(String(500))
+    
+    # Participants
+    interviewer_id = Column(Integer, ForeignKey("users.id"))
+    additional_interviewers = Column(Text)  # JSON array of user IDs
+    
+    # Status
+    status = Column(String(20), default="scheduled")  # scheduled, completed, cancelled, rescheduled
+    feedback = Column(Text)
+    rating = Column(Integer)  # 1-5 rating
+    recommendation = Column(String(20))  # hire, reject, next_round
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    job_application = relationship("JobApplications")
+    interviewer = relationship("Users")
+
+class PerformanceGoals(Base):
+    __tablename__ = "performance_goals"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    goal_title = Column(String(200), nullable=False)
+    description = Column(Text)
+    
+    # Goal details
+    goal_type = Column(String(50), default="performance")  # performance, development, behavioral
+    category = Column(String(50))  # sales, quality, efficiency, learning
+    
+    # SMART goal attributes
+    specific_description = Column(Text)
+    measurable_criteria = Column(Text)
+    achievable_steps = Column(Text)
+    relevant_reason = Column(Text)
+    time_bound_deadline = Column(Date)
+    
+    # Targets
+    target_value = Column(Numeric(12, 2))
+    target_unit = Column(String(50))  # percentage, amount, count
+    current_value = Column(Numeric(12, 2), default=0)
+    
+    # Timeline
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    
+    # Status
+    status = Column(String(20), default="active")  # active, completed, cancelled, overdue
+    completion_percentage = Column(Integer, default=0)
+    
+    # Review
+    assigned_by_id = Column(Integer, ForeignKey("users.id"))
+    last_review_date = Column(Date)
+    next_review_date = Column(Date)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    assigned_by = relationship("Users")
+
+class GoalProgress(Base):
+    __tablename__ = "goal_progress"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    goal_id = Column(Integer, ForeignKey("performance_goals.id"))
+    
+    # Progress details
+    progress_date = Column(Date, nullable=False)
+    progress_value = Column(Numeric(12, 2), nullable=False)
+    progress_percentage = Column(Integer, nullable=False)
+    notes = Column(Text)
+    
+    # Evidence
+    evidence_files = Column(Text)  # JSON array of file URLs
+    
+    # Review
+    reviewed_by_id = Column(Integer, ForeignKey("users.id"))
+    review_comments = Column(Text)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    goal = relationship("PerformanceGoals")
+    reviewed_by = relationship("Users")
+
+class EmployeeSelfService(Base):
+    __tablename__ = "employee_self_service"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    request_type = Column(String(50), nullable=False)  # personal_info, address, emergency_contact, bank_details
+    
+    # Request data
+    current_data = Column(Text)  # JSON current data
+    requested_data = Column(Text, nullable=False)  # JSON requested changes
+    change_reason = Column(Text)
+    
+    # Supporting documents
+    supporting_documents = Column(Text)  # JSON array of document URLs
+    
+    # Status
+    status = Column(String(20), default="pending")  # pending, approved, rejected
+    reviewed_by_id = Column(Integer, ForeignKey("users.id"))
+    review_date = Column(DateTime(timezone=True))
+    review_comments = Column(Text)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    reviewed_by = relationship("Users")
+
+class TimeTracking(Base):
+    __tablename__ = "time_tracking"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    task_id = Column(Integer, ForeignKey("tasks.id"))
+    
+    # Time details
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True))
+    total_minutes = Column(Integer)
+    break_minutes = Column(Integer, default=0)
+    
+    # Description
+    description = Column(Text)
+    activity_type = Column(String(50))  # development, meeting, research, testing
+    
+    # Status
+    is_billable = Column(Boolean, default=True)
+    is_approved = Column(Boolean, default=False)
+    approved_by_id = Column(Integer, ForeignKey("users.id"))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    project = relationship("Projects")
+    task = relationship("Tasks")
+    approved_by = relationship("Users")
+
+class ShiftManagement(Base):
+    __tablename__ = "shift_management"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100), nullable=False)
+    description = Column(Text)
+    
+    # Shift timing
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    break_duration_minutes = Column(Integer, default=60)
+    
+    # Working days
+    working_days = Column(Text, nullable=False)  # JSON array of days [1,2,3,4,5] for Mon-Fri
+    
+    # Settings
+    grace_period_minutes = Column(Integer, default=15)
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class EmployeeShiftAssignment(Base):
+    __tablename__ = "employee_shift_assignment"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"))
+    shift_id = Column(Integer, ForeignKey("shift_management.id"))
+    
+    # Assignment period
+    effective_from = Column(Date, nullable=False)
+    effective_to = Column(Date)
+    
+    # Override settings for this employee
+    custom_start_time = Column(Time)
+    custom_end_time = Column(Time)
+    custom_working_days = Column(Text)  # JSON array
+    
+    is_active = Column(Boolean, default=True)
+    assigned_by_id = Column(Integer, ForeignKey("users.id"))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    employee = relationship("Employees")
+    shift = relationship("ShiftManagement")
+    assigned_by = relationship("Users")
