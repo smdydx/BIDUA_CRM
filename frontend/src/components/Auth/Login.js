@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Container,
@@ -10,6 +9,7 @@ import {
   Tab,
   Tabs,
 } from '@mui/material';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login = () => {
@@ -38,13 +38,13 @@ const Login = () => {
       alert('Passwords do not match');
       return;
     }
-    
+
     const success = await register({
       email: registerData.email,
       password: registerData.password,
       name: registerData.name,
     });
-    
+
     if (success) {
       setTabValue(0);
       setRegisterData({ email: '', password: '', name: '', confirmPassword: '' });
@@ -65,7 +65,7 @@ const Login = () => {
           <Typography component="h1" variant="h4" align="center" gutterBottom>
             CRM + HRMS System
           </Typography>
-          
+
           <Tabs value={tabValue} onChange={handleTabChange} centered>
             <Tab label="Login" />
             <Tab label="Register" />
@@ -105,6 +105,12 @@ const Login = () => {
               >
                 Sign In
               </Button>
+              <p className="mt-2 text-center text-sm text-gray-600">
+                Or{' '}
+                <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+                  create a new account
+                </Link>
+              </p>
             </Box>
           )}
 

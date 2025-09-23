@@ -7,14 +7,54 @@ from sqlalchemy import and_, or_, func, select, text, desc, asc
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 import asyncio
 import logging
+import hashlib
 from app.core.database import Base
-from app.core.cache import cached, cache_invalidate, cache
+from app.models.models import *
+from app.schemas import schemas
 
 logger = logging.getLogger(__name__)
 
 ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
+
+class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    def __init__(self, model: Type[ModelType]):
+        self.model = model
+
+    async def get(self, db: Session, id: Any) -> Optional[ModelType]:
+        return db.query(self.model).filter(self.model.id == id).first()
+
+    async def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
+        return db.query(self.model).offset(skip).limit(limit).all()
+
+    async def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
+        obj_in_data = jsonable_encoder(obj_in)
+        if hasattr(obj_in, 'password'):
+            # Hash password
+            obj_in_data['password_hash'] = hashlib.sha256(obj_in.password.encode()).hexdigest()
+            del obj_in_data['password']
+        db_obj = self.model(**obj_in_data)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+class CRUDUser(CRUDBase[Users, schemas.UserCreate, schemas.UserUpdate]):
+    async def get_by_email(self, db: Session, *, email: str) -> Optional[Users]:
+        return db.query(Users).filter(Users.email == email).first()
+
+    async def get_by_username(self, db: Session, *, username: str) -> Optional[Users]:
+        return db.query(Users).filter(Users.username == username).first()
+
+    async def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:
+        user = self.get_by_email(db, email=email)
+        if not user:
+            return None
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        if user.password_hash != password_hash:
+            return None
+        return user
 
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]):

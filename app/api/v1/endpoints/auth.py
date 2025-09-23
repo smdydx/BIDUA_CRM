@@ -52,6 +52,50 @@ async def login_user(
     # TODO: Implement proper authentication with password validation
     return {"access_token": "mock_jwt_token", "token_type": "bearer"}
 
+@router.post("/register")
+async def register_user(
+    user_data: schemas.UserCreate,
+    db: Session = Depends(get_db)
+):
+    """User registration endpoint"""
+    try:
+        # Check if user already exists
+        existing_user = await crud.user.get_by_email(db, email=user_data.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        
+        existing_username = await crud.user.get_by_username(db, username=user_data.username)
+        if existing_username:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken"
+            )
+        
+        # Create new user
+        new_user = await crud.user.create(db, obj_in=user_data)
+        
+        return {
+            "message": "User registered successfully",
+            "user": {
+                "id": new_user.id,
+                "username": new_user.username,
+                "email": new_user.email,
+                "first_name": new_user.first_name,
+                "last_name": new_user.last_name
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Registration failed: {str(e)}"
+        )
+
 @router.post("/refresh")
 async def refresh_token(
     current_user: schemas.UserResponse = Depends(get_current_user)
