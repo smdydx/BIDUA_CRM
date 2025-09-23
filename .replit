@@ -10,27 +10,6 @@ packages = ["libiconv", "libxcrypt", "nodejs-18_x", "npm"]
 runButton = "Project"
 
 [[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "FastAPI Server"
-
-[[workflows.workflow]]
-name = "FastAPI Server"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python main.py"
-waitForPort = 5000
-
-[[workflows.workflow]]
 name = "CRM HRMS Server"
 author = 47922221
 mode = "sequential"
@@ -70,6 +49,27 @@ mode = "sequential"
 task = "shell.exec"
 args = "cd frontend && npm install && PORT=3001 npm start"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Frontend Server"
+
+[[workflows.workflow]]
+name = "Frontend Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./start_app.sh"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[ports]]
 localPort = 3000
 externalPort = 3000
@@ -81,10 +81,6 @@ externalPort = 3001
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 42555
-externalPort = 3002
 
 [deployment]
 deploymentTarget = "autoscale"
