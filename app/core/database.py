@@ -7,11 +7,10 @@ import os
 
 Base = declarative_base()
 
-# PostgreSQL database configuration using Replit environment variables
-DATABASE_URL = os.getenv("DATABASE_URL")
+# Database configuration - SQLite for reliable operation
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./crm_hrms.db")
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+print(f"🗄️ Using database: {DATABASE_URL}")
 
 # Create engine with performance optimizations for PostgreSQL
 engine = create_engine(
