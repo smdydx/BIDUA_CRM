@@ -92,52 +92,40 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Simulate API calls for enterprise data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setDashboardData({
-        kpis: {
-          totalRevenue: { value: '₹2.45Cr', change: 12.5, trend: 'up' },
-          totalEmployees: { value: '1,247', change: 3.2, trend: 'up' },
-          activeClients: { value: '89', change: -2.1, trend: 'down' },
-          projectsCompleted: { value: '156', change: 8.7, trend: 'up' },
-          customerSatisfaction: { value: '94.2%', change: 1.8, trend: 'up' },
-          avgDealSize: { value: '₹12.8L', change: 5.4, trend: 'up' }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/v1/analytics/dashboard/overview', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        recentActivities: [
-          { id: 1, type: 'deal', title: 'New deal closed with Infosys', amount: '₹50L', time: '2 hours ago', status: 'success' },
-          { id: 2, type: 'employee', title: 'New employee onboarded', name: 'Rajesh Kumar', time: '4 hours ago', status: 'info' },
-          { id: 3, type: 'project', title: 'Project milestone completed', project: 'Digital Transformation', time: '6 hours ago', status: 'success' },
-          { id: 4, type: 'meeting', title: 'Client meeting scheduled', client: 'TCS', time: '1 day ago', status: 'warning' }
-        ],
-        upcomingTasks: [
-          { id: 1, title: 'Quarterly Review Meeting', due: '2 days', priority: 'high', assignee: 'Priya Sharma' },
-          { id: 2, title: 'Client Proposal Submission', due: '5 days', priority: 'high', assignee: 'Amit Singh' },
-          { id: 3, title: 'Team Performance Appraisal', due: '1 week', priority: 'medium', assignee: 'Neha Gupta' },
-          { id: 4, title: 'New Hire Orientation', due: '3 days', priority: 'medium', assignee: 'HR Team' }
-        ],
-        teamPerformance: [
-          { name: 'Sales', target: 100, achieved: 95, efficiency: 95 },
-          { name: 'Marketing', target: 100, achieved: 87, efficiency: 87 },
-          { name: 'Development', target: 100, achieved: 102, efficiency: 102 },
-          { name: 'HR', target: 100, achieved: 78, efficiency: 78 },
-          { name: 'Support', target: 100, achieved: 92, efficiency: 92 }
-        ],
-        salesPipeline: [
-          { name: 'Prospecting', value: 35, deals: 45 },
-          { name: 'Discovery', value: 25, deals: 32 },
-          { name: 'Proposal', value: 20, deals: 18 },
-          { name: 'Negotiation', value: 15, deals: 12 },
-          { name: 'Closed Won', value: 5, deals: 8 }
-        ],
-        monthlyRevenue: [
-          { month: 'Jan', revenue: 180, target: 200, deals: 12 },
-          { month: 'Feb', revenue: 210, target: 220, deals: 15 },
-          { month: 'Mar', revenue: 195, target: 200, deals: 13 },
-          { month: 'Apr', revenue: 240, target: 230, deals: 18 },
-          { month: 'May', revenue: 220, target: 240, deals: 16 },
-          { month: 'Jun', revenue: 260, target: 250, deals: 20 }
-        ]
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Set real data from API response
+      setDashboardData({
+        kpis: data.kpis || {
+          totalRevenue: { value: '₹0L', change: 0, trend: 'up' },
+          totalEmployees: { value: '0', change: 0, trend: 'up' },
+          activeClients: { value: '0', change: 0, trend: 'up' },
+          projectsCompleted: { value: '0', change: 0, trend: 'up' },
+          customerSatisfaction: { value: '0%', change: 0, trend: 'up' },
+          avgDealSize: { value: '₹0L', change: 0, trend: 'up' }
+        },
+        recentActivities: data.recentActivities || [],
+        upcomingTasks: data.upcomingTasks || [],
+        teamPerformance: data.teamPerformance || [],
+        salesPipeline: data.salesPipeline || [],
+        monthlyRevenue: data.monthlyRevenue || []
       });
       
       setLoading(false);

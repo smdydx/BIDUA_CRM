@@ -190,10 +190,48 @@
   }
 }
 
+/* Empty State Styles */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.empty-state-description {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Loading States */
+.loading-card {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Responsive Design */
+@media (max-width: 1200px) {
+  .metric-value {
+    font-size: 2.2rem;
+  }
+}
+
 @media (max-width: 768px) {
   .metric-value {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
   .kpi-card {
@@ -202,6 +240,43 @@
   
   .chart-card {
     margin-bottom: 20px;
+  }
+  
+  .professional-table {
+    font-size: 0.875rem;
+  }
+  
+  .professional-table th,
+  .professional-table td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metric-value {
+    font-size: 1.5rem;
+  }
+  
+  .dashboard-container {
+    padding: 16px;
+  }
+  
+  .chart-card {
+    height: 300px;
+  }
+  
+  .professional-table {
+    font-size: 0.8rem;
+  }
+  
+  .professional-table th,
+  .professional-table td {
+    padding: 8px 4px;
+  }
+  
+  .status-chip {
+    font-size: 0.7rem;
+    padding: 2px 8px;
   }
 }
 

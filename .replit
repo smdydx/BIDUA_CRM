@@ -137,6 +137,10 @@ args = "cd frontend && npm install && npm run build"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
+args = "python create_admin_user.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
 args = "python main.py"
 
 [[ports]]
