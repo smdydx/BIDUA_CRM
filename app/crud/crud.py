@@ -47,44 +47,6 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]):
-        self.model = model
-
-    async def get(self, db: Session, id: Any) -> Optional[ModelType]:
-        return db.query(self.model).filter(self.model.id == id).first()
-
-    async def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[ModelType]:
-        return db.query(self.model).offset(skip).limit(limit).all()
-
-    async def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
-        obj_in_data = jsonable_encoder(obj_in)
-        if hasattr(obj_in, 'password'):
-            # Hash password
-            obj_in_data['password_hash'] = hashlib.sha256(obj_in.password.encode()).hexdigest()
-            del obj_in_data['password']
-        db_obj = self.model(**obj_in_data)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
-
-class CRUDUser(CRUDBase[Users, schemas.UserCreate, schemas.UserUpdate]):
-    async def get_by_email(self, db: Session, *, email: str) -> Optional[Users]:
-        return db.query(Users).filter(Users.email == email).first()
-
-    async def get_by_username(self, db: Session, *, username: str) -> Optional[Users]:
-        return db.query(Users).filter(Users.username == username).first()
-
-    async def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:
-        user = self.get_by_email(db, email=email)
-        if not user:
-            return None
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
-        if user.password_hash != password_hash:
-            return None
-        return user
-
-class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    def __init__(self, model: Type[ModelType]):
         """
         CRUD object with default methods to Create, Read, Update, Delete (CRUD).
         """
@@ -101,10 +63,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     @cached(ttl=180, prefix="get_multi")
     async def get_multi(
-        self, 
-        db: Session, 
-        *, 
-        skip: int = 0, 
+        self,
+        db: Session,
+        *,
+        skip: int = 0,
         limit: int = 100,
         filters: Optional[Dict[str, Any]] = None,
         search: Optional[str] = None,
@@ -113,7 +75,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """Get multiple records with optimized filtering, pagination and caching"""
         try:
             query = db.query(self.model)
-            
+
             # Apply filters with optimized conditions
             if filters:
                 for key, value in filters.items():
@@ -125,22 +87,22 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                             query = query.filter(column.in_(value))
                         else:
                             query = query.filter(column == value)
-            
+
             # Apply search with better performance
             if search:
                 search_term = f"%{search.lower()}%"
                 search_conditions = []
-                
+
                 # Common searchable fields
                 searchable_fields = ['name', 'title', 'first_name', 'last_name', 'email', 'description']
                 for field in searchable_fields:
                     if hasattr(self.model, field):
                         column = getattr(self.model, field)
                         search_conditions.append(column.ilike(search_term))
-                
+
                 if search_conditions:
                     query = query.filter(or_(*search_conditions))
-            
+
             # Apply ordering
             if order_by:
                 if order_by.startswith('-'):
@@ -153,26 +115,26 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             else:
                 # Default ordering by ID descending for better performance
                 query = query.order_by(desc(self.model.id))
-            
+
             # Limit should not exceed 100 for performance
             limit = min(limit, 100)
-            
+
             return query.offset(skip).limit(limit).all()
-            
+
         except Exception as e:
             logger.error(f"Error fetching {self.model.__name__} list: {str(e)}")
             raise SQLAlchemyError(f"Error fetching {self.model.__name__} list: {str(e)}")
 
     async def get_count(
-        self, 
-        db: Session, 
+        self,
+        db: Session,
         filters: Optional[Dict[str, Any]] = None,
         search: Optional[str] = None
     ) -> int:
         """Get total count of records with optional filtering"""
         try:
             query = db.query(func.count(self.model.id))
-            
+
             # Apply filters
             if filters:
                 for key, value in filters.items():
@@ -181,13 +143,13 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                             query = query.filter(getattr(self.model, key).like(value))
                         else:
                             query = query.filter(getattr(self.model, key) == value)
-            
+
             # Apply search if supported
             if search and hasattr(self.model, 'name'):
                 query = query.filter(self.model.name.contains(search))
             elif search and hasattr(self.model, 'title'):
                 query = query.filter(self.model.title.contains(search))
-            
+
             return query.scalar()
         except Exception as e:
             raise SQLAlchemyError(f"Error counting {self.model.__name__}: {str(e)}")
@@ -197,22 +159,22 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """Create a new record with cache invalidation"""
         try:
             obj_in_data = jsonable_encoder(obj_in)
-            
+
             # Add created_by_id if model supports it and not already set
             if created_by_id and hasattr(self.model, 'created_by_id') and 'created_by_id' not in obj_in_data:
                 obj_in_data['created_by_id'] = created_by_id
-            
+
             db_obj = self.model(**obj_in_data)
             db.add(db_obj)
             db.commit()
             db.refresh(db_obj)
-            
+
             # Invalidate related caches
             await cache.clear_pattern(f"*{self.model.__name__.lower()}*")
-            
+
             logger.info(f"Created {self.model.__name__} with ID: {db_obj.id}")
             return db_obj
-            
+
         except IntegrityError as e:
             db.rollback()
             logger.error(f"Integrity error creating {self.model.__name__}: {str(e)}")
@@ -236,11 +198,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 update_data = obj_in
             else:
                 update_data = obj_in.dict(exclude_unset=True)
-            
+
             for field in obj_data:
                 if field in update_data:
                     setattr(db_obj, field, update_data[field])
-            
+
             db.add(db_obj)
             db.commit()
             db.refresh(db_obj)
@@ -258,7 +220,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             obj = db.query(self.model).get(id)
             if not obj:
                 raise ValueError(f"{self.model.__name__} not found")
-            
+
             db.delete(obj)
             db.commit()
             return obj
@@ -272,7 +234,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             obj = db.query(self.model).get(id)
             if not obj:
                 return None
-            
+
             if hasattr(obj, 'is_active'):
                 obj.is_active = False
                 db.add(obj)
@@ -318,13 +280,17 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
         if not user:
             return None
         # TODO: Implement password verification
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        if user.password_hash != password_hash:
+            return None
         return user
 
     async def create(self, db: Session, *, obj_in: UserCreate) -> Users:
         """Create user with hashed password"""
         # TODO: Implement password hashing
         obj_in_data = jsonable_encoder(obj_in)
-        obj_in_data['password_hash'] = obj_in_data.pop('password')  # Simple implementation
+        obj_in_data['password_hash'] = hashlib.sha256(obj_in.password.encode()).hexdigest()  # Simple implementation
+        del obj_in_data['password']
         db_obj = Users(**obj_in_data)
         db.add(db_obj)
         db.commit()
@@ -404,7 +370,7 @@ class CRUDDeal(CRUDBase[Deals, DealCreate, DealUpdate]):
             Deals.stage,
             func.sum(Deals.value).label('total_value')
         ).group_by(Deals.stage).all()
-        
+
         return {stage: float(total_value or 0) for stage, total_value in result}
 
 class CRUDActivity(CRUDBase[Activities, ActivityCreate, ActivityUpdate]):

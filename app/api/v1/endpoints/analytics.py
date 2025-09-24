@@ -12,9 +12,14 @@ from app.models.models import *
 
 router = APIRouter()
 
-async def get_current_user(current_user: dict = Depends()):
-    """Placeholder for current user dependency"""
-    return current_user
+async def get_current_user():
+    """Placeholder for current user dependency - will be overridden by main.py dependency"""
+    return {
+        "id": 1,
+        "username": "demo",
+        "email": "demo@company.com",
+        "role": "admin"
+    }
 
 @router.get("/dashboard/overview")
 async def get_dashboard_overview(

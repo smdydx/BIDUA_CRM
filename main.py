@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -323,9 +324,13 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user)):
     return current_user
 
 # Include API routers
-from app.api.v1.endpoints import analytics
+from app.api.v1.endpoints import analytics, crm, hr, projects, users
 
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
+app.include_router(crm.router, prefix="/api/v1/crm", tags=["crm"])
+app.include_router(hr.router, prefix="/api/v1/hr", tags=["hr"])
+app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 
 # Static files for production deployment
 build_dir = os.path.join(os.path.dirname(__file__), "frontend", "build")
