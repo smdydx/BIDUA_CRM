@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, CircularProgress } from '@mui/material';
+import React from 'react';
+import { Box, Typography, Card, CardContent } from '@mui/material';
 import { Assessment } from '@mui/icons-material';
 
 const Activities = () => {

@@ -84,7 +84,7 @@ const Companies = () => {
 
   useEffect(() => {
     fetchCompanies();
-  }, [searchTerm, industryFilter, sizeFilter]);
+  }, [fetchCompanies]);
 
   const fetchCompanies = async () => {
     try {
@@ -93,7 +93,7 @@ const Companies = () => {
       if (searchTerm) params.append('search', searchTerm);
       if (industryFilter) params.append('industry', industryFilter);
       if (sizeFilter) params.append('size', sizeFilter);
-      
+
       const response = await axios.get(`/api/v1/crm/companies/?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });

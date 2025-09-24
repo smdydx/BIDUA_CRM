@@ -71,18 +71,13 @@ const Contacts = () => {
     is_active: true
   });
 
-  useEffect(() => {
-    fetchContacts();
-    fetchCompanies();
-  }, [searchTerm, companyFilter]);
-
-  const fetchContacts = async () => {
+  const fetchContacts = React.useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (companyFilter) params.append('company_id', companyFilter);
-      
+
       const response = await axios.get(`/api/v1/crm/contacts/?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -93,9 +88,9 @@ const Contacts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, companyFilter, token]); // Added token to dependencies
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = React.useCallback(async () => {
     try {
       const response = await axios.get('/api/v1/crm/companies/', {
         headers: { Authorization: `Bearer ${token}` }
@@ -103,8 +98,14 @@ const Contacts = () => {
       setCompanies(response.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies'); // Added toast for company fetch error
     }
-  };
+  }, [token]); // Added token to dependencies
+
+  useEffect(() => {
+    fetchContacts();
+    fetchCompanies();
+  }, [fetchContacts, fetchCompanies]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

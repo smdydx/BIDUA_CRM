@@ -17,7 +17,6 @@ import {
   MenuItem,
   Badge,
   useTheme,
-  useMediaQuery,
   Collapse
 } from '@mui/material';
 import {

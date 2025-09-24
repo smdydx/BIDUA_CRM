@@ -13,7 +13,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   IconButton,
   Dialog,
   DialogActions,
@@ -88,20 +87,13 @@ const Leads = () => {
     'Trade Show', 'Advertisement', 'Partner', 'Direct Mail', 'Other'
   ];
 
-  useEffect(() => {
-    fetchLeads();
-    fetchCompanies();
-    fetchContacts();
-    fetchUsers();
-  }, [searchTerm, statusFilter]);
-
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (statusFilter) params.append('status', statusFilter);
-      
+
       const response = await axios.get(`/api/v1/crm/leads/?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -112,9 +104,9 @@ const Leads = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, searchTerm, statusFilter]);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       const response = await axios.get('/api/v1/crm/companies/', {
         headers: { Authorization: `Bearer ${token}` }
@@ -123,9 +115,9 @@ const Leads = () => {
     } catch (error) {
       console.error('Error fetching companies:', error);
     }
-  };
+  }, [token]);
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     try {
       const response = await axios.get('/api/v1/crm/contacts/', {
         headers: { Authorization: `Bearer ${token}` }
@@ -134,9 +126,9 @@ const Leads = () => {
     } catch (error) {
       console.error('Error fetching contacts:', error);
     }
-  };
+  }, [token]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await axios.get('/api/v1/users/', {
         headers: { Authorization: `Bearer ${token}` }
@@ -145,7 +137,14 @@ const Leads = () => {
     } catch (error) {
       console.error('Error fetching users:', error);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchLeads();
+    fetchCompanies();
+    fetchContacts();
+    fetchUsers();
+  }, [fetchLeads, fetchCompanies, fetchContacts, fetchUsers]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -110,7 +109,7 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      
+
       // Set real data from API response
       setDashboardData({
         kpis: data.kpis || {
@@ -127,7 +126,7 @@ const Dashboard = () => {
         salesPipeline: data.salesPipeline || [],
         monthlyRevenue: data.monthlyRevenue || []
       });
-      
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -136,8 +135,8 @@ const Dashboard = () => {
   };
 
   const KPICard = ({ title, value, change, trend, icon: Icon, color }) => (
-    <Card 
-      sx={{ 
+    <Card
+      sx={{
         height: '100%',
         background: `linear-gradient(135deg, ${color}15 0%, ${color}05 100%)`,
         border: `1px solid ${alpha(color, 0.1)}`,
@@ -163,8 +162,8 @@ const Dashboard = () => {
               ) : (
                 <TrendingDown sx={{ color: colors.error, fontSize: 16, mr: 0.5 }} />
               )}
-              <Typography 
-                variant="caption" 
+              <Typography
+                variant="caption"
                 color={trend === 'up' ? colors.success : colors.error}
                 fontWeight="medium"
               >
@@ -172,8 +171,8 @@ const Dashboard = () => {
               </Typography>
             </Box>
           </Box>
-          <Avatar 
-            sx={{ 
+          <Avatar
+            sx={{
               bgcolor: alpha(color, 0.1),
               color: color,
               width: 56,
@@ -386,7 +385,7 @@ const Dashboard = () => {
                   <React.Fragment key={activity.id}>
                     <ListItem>
                       <ListItemAvatar>
-                        <Avatar sx={{ 
+                        <Avatar sx={{
                           bgcolor: activity.status === 'success' ? colors.success :
                                   activity.status === 'warning' ? colors.warning :
                                   activity.status === 'info' ? colors.info : colors.primary
@@ -405,10 +404,10 @@ const Dashboard = () => {
                               {activity.time}
                             </Typography>
                             {activity.amount && (
-                              <Chip 
-                                size="small" 
-                                label={activity.amount} 
-                                color="success" 
+                              <Chip
+                                size="small"
+                                label={activity.amount}
+                                color="success"
                                 sx={{ ml: 1 }}
                               />
                             )}
