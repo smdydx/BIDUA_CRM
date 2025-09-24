@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       // Let the proxy handle backend requests
       axios.defaults.baseURL = '';
     }
-    
+
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
@@ -82,11 +82,11 @@ export const AuthProvider = ({ children }) => {
         // Get user info from backend after successful login
         setToken(access_token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        
+
         try {
           const userResponse = await axios.get('/api/v1/auth/me');
           const userData = userResponse.data;
-          
+
           setUser(userData);
           localStorage.setItem('token', access_token);
           localStorage.setItem('user', JSON.stringify(userData));
@@ -143,11 +143,11 @@ export const AuthProvider = ({ children }) => {
 
         setToken(access_token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-        
+
         try {
           const userResponse = await axios.get('/api/v1/auth/me');
           const newUser = userResponse.data;
-          
+
           setUser(newUser);
           localStorage.setItem('token', access_token);
           localStorage.setItem('user', JSON.stringify(newUser));

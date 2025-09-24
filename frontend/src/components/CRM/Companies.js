@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -82,11 +82,7 @@ const Companies = () => {
 
   const sizes = ['Small', 'Medium', 'Large', 'Enterprise'];
 
-  useEffect(() => {
-    fetchCompanies();
-  }, [fetchCompanies]);
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -104,7 +100,11 @@ const Companies = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, industryFilter, sizeFilter, token]);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
