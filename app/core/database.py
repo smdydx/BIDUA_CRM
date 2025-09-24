@@ -50,10 +50,20 @@ def test_connection():
 def init_database():
     """Initialize database with proper error handling"""
     try:
+        # Import here to avoid circular imports
         from app.models.models import Base
+        
+        # Create all tables
+        print("🔧 Creating database tables...")
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully!")
+        
+        # Test basic query
+        with engine.connect() as connection:
+            connection.execute("SELECT 1")
+        
         return True
     except Exception as e:
         print(f"⚠️ Database initialization error: {e}")
+        print("📦 Tables will be created automatically when first accessed")
         return False

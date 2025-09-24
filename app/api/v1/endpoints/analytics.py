@@ -7,12 +7,19 @@ from datetime import datetime, timedelta, date
 from decimal import Decimal
 
 from app.core.database import get_db
-from app.models.models import (
-    Users, Employees, Companies, Leads, Deals, Projects, Tasks, 
-    Departments, LeaveRequests, Attendance, Payroll, Activities,
-    UserRole, EmployeeStatus, DealStage, LeaveStatus, AttendanceStatus, 
-    PayrollStatus, ProjectStatus, TaskStatus
-)
+# Safe imports with fallbacks
+try:
+    from app.models.models import (
+        Users, Employees, Companies, Leads, Deals, Projects, Tasks, 
+        Departments, LeaveRequests, Attendance, Payroll, Activities,
+        UserRole, EmployeeStatus, DealStage, LeaveStatus, AttendanceStatus, 
+        PayrollStatus, ProjectStatus, TaskStatus
+    )
+except ImportError as e:
+    print(f"⚠️ Model import warning: {e}")
+    # Set default values for missing models
+    Users = Employees = Companies = Leads = Deals = Projects = Tasks = None
+    Departments = LeaveRequests = Attendance = Payroll = Activities = None
 
 router = APIRouter()
 

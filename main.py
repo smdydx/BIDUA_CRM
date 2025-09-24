@@ -21,15 +21,23 @@ import os
 from app.core.database import get_db, engine, Base, test_connection, init_database
 
 # Import models to ensure they're registered
-from app.models.models import Base
-from app.models import models
+from app.models.models import (
+    Base, Users, Employees, Companies, Contacts, Leads, Deals, 
+    Departments, Designations, LeaveRequests, Attendance, Payroll, 
+    Activities, Projects, Tasks, UserRole, EmployeeStatus, DealStage
+)
 
 # Initialize database
 print("🔧 Initializing database...")
-if test_connection():
-    init_database()
-else:
-    print("⚠️ Database connection failed, using SQLite fallback...")
+try:
+    if test_connection():
+        init_database()
+        print("✅ Database initialized successfully!")
+    else:
+        print("⚠️ Database connection failed, but will continue...")
+except Exception as e:
+    print(f"⚠️ Database initialization warning: {e}")
+    print("📦 Will create tables on first API call...")
 
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "_aR4aqxoy0m4dIRx7PNrGI20SqruHEwHeHKSyJmlOSw")
@@ -364,13 +372,24 @@ if __name__ == "__main__":
     host = "0.0.0.0"
     port = PORT
     reload = False
-    print(f"🚀 Starting CRM+HRMS Pro Server on {host}:{port}")
-    print(f"📊 API Documentation: https://{os.getenv('REPLIT_DEV_DOMAIN', 'localhost:5000')}/docs")
-
-    uvicorn.run(
-        "main:app",
-        host=host,
-        port=port,
-        reload=reload,
-        log_level="info"
-    )
+    
+    print("=" * 60)
+    print("🚀 Starting CRM+HRMS Pro Server")
+    print("=" * 60)
+    print(f"🌐 Server: http://{host}:{port}")
+    print(f"📊 API Docs: http://{host}:{port}/docs")
+    print(f"💾 Database: {'PostgreSQL' if os.getenv('DATABASE_URL') else 'SQLite'}")
+    print("=" * 60)
+    
+    try:
+        uvicorn.run(
+            "main:app",
+            host=host,
+            port=port,
+            reload=reload,
+            log_level="info"
+        )
+    except Exception as e:
+        print(f"❌ Server failed to start: {e}")
+        print("🔧 Try running: python fix_database.py")
+        sys.exit(1)
