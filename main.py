@@ -17,27 +17,30 @@ from pydantic import BaseModel, EmailStr
 import uvicorn
 import os
 
-# Import database
-from app.core.database import get_db, engine, Base, test_connection, init_database
-
-# Import models to ensure they're registered
+# Import models first to register them with Base
 from app.models.models import (
     Base, Users, Employees, Companies, Contacts, Leads, Deals, 
     Departments, Designations, LeaveRequests, Attendance, Payroll, 
     Activities, Projects, Tasks, UserRole, EmployeeStatus, DealStage
 )
 
+# Import database after models
+from app.core.database import get_db, engine, Base as DbBase, test_connection, init_database
+
 # Initialize database
 print("🔧 Initializing database...")
 try:
+    print("🔗 Testing database connection...")
     if test_connection():
+        print("✅ Database connection successful")
+        print("🏗️ Creating tables...")
         init_database()
         print("✅ Database initialized successfully!")
     else:
-        print("⚠️ Database connection failed, but will continue...")
+        print("⚠️ Database connection failed, using fallback...")
 except Exception as e:
-    print(f"⚠️ Database initialization warning: {e}")
-    print("📦 Will create tables on first API call...")
+    print(f"⚠️ Database initialization error: {e}")
+    print("📦 Application will continue with basic functionality...")
 
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "_aR4aqxoy0m4dIRx7PNrGI20SqruHEwHeHKSyJmlOSw")
@@ -379,17 +382,31 @@ if __name__ == "__main__":
     print(f"🌐 Server: http://{host}:{port}")
     print(f"📊 API Docs: http://{host}:{port}/docs")
     print(f"💾 Database: {'PostgreSQL' if os.getenv('DATABASE_URL') else 'SQLite'}")
+    print("🔑 Login: admin@company.com / admin123")
     print("=" * 60)
     
     try:
+        print("🚀 Starting server...")
         uvicorn.run(
             "main:app",
             host=host,
             port=port,
             reload=reload,
-            log_level="info"
+            log_level="info",
+            access_log=True
         )
+    except KeyboardInterrupt:
+        print("\n🛑 Server stopped by user")
     except Exception as e:
         print(f"❌ Server failed to start: {e}")
-        print("🔧 Try running: python fix_database.py")
-        sys.exit(1)
+        print("🔧 Trying to fix database and restart...")
+        try:
+            # Try to fix database issues
+            import subprocess
+            subprocess.run([sys.executable, "fix_database.py"], check=True)
+            subprocess.run([sys.executable, "create_admin_user.py"], check=True)
+            print("🔄 Retrying server start...")
+            uvicorn.run("main:app", host=host, port=port, reload=reload, log_level="info")
+        except Exception as retry_error:
+            print(f"❌ Retry failed: {retry_error}")
+            sys.exit(1)

@@ -40,7 +40,10 @@ def get_db():
 def test_connection():
     try:
         with engine.connect() as connection:
-            connection.execute("SELECT 1")
+            if DATABASE_URL and DATABASE_URL.startswith("postgresql"):
+                connection.execute(text("SELECT 1"))
+            else:
+                connection.execute(text("SELECT 1"))
             print("✅ Database connection successful!")
             return True
     except Exception as e:
@@ -50,9 +53,6 @@ def test_connection():
 def init_database():
     """Initialize database with proper error handling"""
     try:
-        # Import here to avoid circular imports
-        from app.models.models import Base
-        
         # Create all tables
         print("🔧 Creating database tables...")
         Base.metadata.create_all(bind=engine)
@@ -60,10 +60,14 @@ def init_database():
         
         # Test basic query
         with engine.connect() as connection:
-            connection.execute("SELECT 1")
+            if DATABASE_URL and DATABASE_URL.startswith("postgresql"):
+                result = connection.execute(text("SELECT 1"))
+            else:
+                result = connection.execute(text("SELECT 1"))
+            connection.commit()
         
         return True
     except Exception as e:
         print(f"⚠️ Database initialization error: {e}")
-        print("📦 Tables will be created automatically when first accessed")
+        print("📦 Tables will be created automatically when needed")
         return False
