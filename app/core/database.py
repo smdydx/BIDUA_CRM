@@ -40,8 +40,20 @@ def get_db():
 def test_connection():
     try:
         with engine.connect() as connection:
+            connection.execute("SELECT 1")
             print("✅ Database connection successful!")
             return True
     except Exception as e:
         print(f"❌ Database connection failed: {e}")
+        return False
+
+def init_database():
+    """Initialize database with proper error handling"""
+    try:
+        from app.models.models import Base
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully!")
+        return True
+    except Exception as e:
+        print(f"⚠️ Database initialization error: {e}")
         return False

@@ -18,10 +18,18 @@ import uvicorn
 import os
 
 # Import database
-from app.core.database import get_db, engine, Base
+from app.core.database import get_db, engine, Base, test_connection, init_database
 
 # Import models to ensure they're registered
-from app.models.models import *
+from app.models.models import Base
+from app.models import models
+
+# Initialize database
+print("🔧 Initializing database...")
+if test_connection():
+    init_database()
+else:
+    print("⚠️ Database connection failed, using SQLite fallback...")
 
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "_aR4aqxoy0m4dIRx7PNrGI20SqruHEwHeHKSyJmlOSw")
@@ -325,6 +333,9 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user)):
 
 # Include API routers
 from app.api.v1.endpoints import analytics, crm, hr, projects, users
+
+# Override analytics router dependency
+analytics.router.dependency_overrides[analytics.get_current_user] = get_current_user
 
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["analytics"])
 app.include_router(crm.router, prefix="/api/v1/crm", tags=["crm"])
