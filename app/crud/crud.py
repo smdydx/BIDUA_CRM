@@ -53,7 +53,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.model = model
 
     @cached(ttl=300, prefix="get_by_id")
-    async def get(self, db: Session, id: Any) -> Optional[ModelType]:
+    def get(self, db: Session, id: Any) -> Optional[ModelType]:
         """Get a single record by ID with caching"""
         try:
             return db.query(self.model).filter(self.model.id == id).first()
@@ -62,7 +62,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise SQLAlchemyError(f"Error fetching {self.model.__name__}: {str(e)}")
 
     @cached(ttl=180, prefix="get_multi")
-    async def get_multi(
+    def get_multi(
         self,
         db: Session,
         *,
@@ -125,7 +125,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             logger.error(f"Error fetching {self.model.__name__} list: {str(e)}")
             raise SQLAlchemyError(f"Error fetching {self.model.__name__} list: {str(e)}")
 
-    async def get_count(
+    def get_count(
         self,
         db: Session,
         filters: Optional[Dict[str, Any]] = None,
@@ -155,7 +155,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             raise SQLAlchemyError(f"Error counting {self.model.__name__}: {str(e)}")
 
     @cache_invalidate(pattern=f"*{__name__.split('.')[-1]}*")
-    async def create(self, db: Session, *, obj_in: CreateSchemaType, created_by_id: Optional[int] = None) -> ModelType:
+    def create(self, db: Session, *, obj_in: CreateSchemaType, created_by_id: Optional[int] = None) -> ModelType:
         """Create a new record with cache invalidation"""
         try:
             obj_in_data = jsonable_encoder(obj_in)
@@ -169,9 +169,6 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db.commit()
             db.refresh(db_obj)
 
-            # Invalidate related caches
-            await cache.clear_pattern(f"*{self.model.__name__.lower()}*")
-
             logger.info(f"Created {self.model.__name__} with ID: {db_obj.id}")
             return db_obj
 
@@ -184,7 +181,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             logger.error(f"Error creating {self.model.__name__}: {str(e)}")
             raise SQLAlchemyError(f"Error creating {self.model.__name__}: {str(e)}")
 
-    async def update(
+    def update(
         self,
         db: Session,
         *,
@@ -214,7 +211,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db.rollback()
             raise SQLAlchemyError(f"Error updating {self.model.__name__}: {str(e)}")
 
-    async def remove(self, db: Session, *, id: int) -> ModelType:
+    def remove(self, db: Session, *, id: int) -> ModelType:
         """Delete a record by ID"""
         try:
             obj = db.query(self.model).get(id)
@@ -228,7 +225,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db.rollback()
             raise SQLAlchemyError(f"Error deleting {self.model.__name__}: {str(e)}")
 
-    async def soft_delete(self, db: Session, *, id: int) -> Optional[ModelType]:
+    def soft_delete(self, db: Session, *, id: int) -> Optional[ModelType]:
         """Soft delete a record (set is_active = False)"""
         try:
             obj = db.query(self.model).get(id)
@@ -243,40 +240,24 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 return obj
             else:
                 # If no is_active field, perform hard delete
-                return await self.remove(db, id=id)
+                return self.remove(db, id=id)
         except Exception as e:
             db.rollback()
             raise SQLAlchemyError(f"Error soft deleting {self.model.__name__}: {str(e)}")
 
-# Import models for CRUD classes
-from app.models.models import (
-    Users, Departments, Designations, Employees, Companies, Contacts,
-    Leads, Deals, Activities, LeaveTypes, LeaveRequests, Attendance,
-    Payroll, Projects, Tasks
-)
-
-from app.schemas.schemas import (
-    UserCreate, UserUpdate, DepartmentCreate, DepartmentUpdate,
-    DesignationCreate, DesignationUpdate, EmployeeCreate, EmployeeUpdate,
-    CompanyCreate, CompanyUpdate, ContactCreate, ContactUpdate,
-    LeadCreate, LeadUpdate, DealCreate, DealUpdate,
-    ActivityCreate, ActivityUpdate, LeaveTypeCreate, LeaveRequestCreate,
-    LeaveRequestUpdate, ProjectCreate, ProjectUpdate, TaskCreate, TaskUpdate
-)
-
 # Specific CRUD classes
 class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
-    async def get_by_email(self, db: Session, *, email: str) -> Optional[Users]:
+    def get_by_email(self, db: Session, *, email: str) -> Optional[Users]:
         """Get user by email"""
         return db.query(Users).filter(Users.email == email).first()
 
-    async def get_by_username(self, db: Session, *, username: str) -> Optional[Users]:
+    def get_by_username(self, db: Session, *, username: str) -> Optional[Users]:
         """Get user by username"""
         return db.query(Users).filter(Users.username == username).first()
 
-    async def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:
+    def authenticate(self, db: Session, *, email: str, password: str) -> Optional[Users]:
         """Authenticate user (to be implemented with password hashing)"""
-        user = await self.get_by_email(db, email=email)
+        user = self.get_by_email(db, email=email)
         if not user:
             return None
         # TODO: Implement password verification
@@ -285,7 +266,7 @@ class CRUDUser(CRUDBase[Users, UserCreate, UserUpdate]):
             return None
         return user
 
-    async def create(self, db: Session, *, obj_in: UserCreate) -> Users:
+    def create(self, db: Session, *, obj_in: UserCreate) -> Users:
         """Create user with hashed password"""
         # TODO: Implement password hashing
         obj_in_data = jsonable_encoder(obj_in)

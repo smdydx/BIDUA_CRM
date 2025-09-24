@@ -1,4 +1,3 @@
-
 """Advanced Analytics and Business Intelligence endpoints"""
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
@@ -32,11 +31,11 @@ async def get_dashboard_overview(
         total_deals_value = db.query(func.coalesce(func.sum(Deals.value), 0)).filter(
             Deals.stage == DealStage.CLOSED_WON
         ).scalar() or 0
-        
+
         # Current month deals
         current_month = datetime.now().month
         current_year = datetime.now().year
-        
+
         deals_this_month = db.query(func.coalesce(func.sum(Deals.value), 0)).filter(
             and_(
                 Deals.stage == DealStage.CLOSED_WON,
@@ -44,11 +43,11 @@ async def get_dashboard_overview(
                 func.extract('year', Deals.created_at) == current_year
             )
         ).scalar() or 0
-        
+
         # Previous month deals for comparison
         prev_month = current_month - 1 if current_month > 1 else 12
         prev_year = current_year if current_month > 1 else current_year - 1
-        
+
         deals_last_month = db.query(func.coalesce(func.sum(Deals.value), 0)).filter(
             and_(
                 Deals.stage == DealStage.CLOSED_WON,
@@ -56,14 +55,14 @@ async def get_dashboard_overview(
                 func.extract('year', Deals.created_at) == prev_year
             )
         ).scalar() or 0
-        
+
         revenue_change = ((deals_this_month - deals_last_month) / max(deals_last_month, 1)) * 100 if deals_last_month > 0 else 0
 
         # Employee Analytics from real employee data
         total_employees = db.query(func.count(Employees.id)).filter(
             Employees.status == EmployeeStatus.ACTIVE
         ).scalar() or 0
-        
+
         # Previous month employee count
         employees_last_month = db.query(func.count(Employees.id)).filter(
             and_(
@@ -71,29 +70,29 @@ async def get_dashboard_overview(
                 Employees.hire_date < date(current_year, current_month, 1)
             )
         ).scalar() or 0
-        
+
         employee_change = ((total_employees - employees_last_month) / max(employees_last_month, 1)) * 100 if employees_last_month > 0 else 0
-        
+
         # Company Analytics from real company data
         active_companies = db.query(func.count(Companies.id)).filter(
             Companies.is_active == True
         ).scalar() or 0
-        
+
         # Project Analytics from real project data
         completed_projects = db.query(func.count(Projects.id)).filter(
             Projects.status == ProjectStatus.COMPLETED
         ).scalar() or 0
-        
+
         total_projects = db.query(func.count(Projects.id)).scalar() or 0
         project_completion_rate = (completed_projects / max(total_projects, 1)) * 100 if total_projects > 0 else 0
-        
+
         # Deal Pipeline Analytics from real data
         pipeline_data = db.query(
             Deals.stage,
             func.coalesce(func.sum(Deals.value), 0).label('total_value'),
             func.count(Deals.id).label('deal_count')
         ).group_by(Deals.stage).all()
-        
+
         # Monthly Revenue Trend from real data
         monthly_revenue = db.query(
             func.extract('month', Deals.created_at).label('month'),
@@ -105,11 +104,11 @@ async def get_dashboard_overview(
                 func.extract('year', Deals.created_at) == current_year
             )
         ).group_by(func.extract('month', Deals.created_at)).all()
-        
+
         # Team Performance based on real departments and employees
         departments = db.query(Departments).filter(Departments.is_active == True).all()
         team_performance = []
-        
+
         for dept in departments:
             emp_count = db.query(func.count(Employees.id)).filter(
                 and_(
@@ -117,15 +116,15 @@ async def get_dashboard_overview(
                     Employees.status == EmployeeStatus.ACTIVE
                 )
             ).scalar() or 0
-            
+
             # Calculate department performance based on completed projects
             dept_projects = db.query(func.count(Projects.id)).filter(
                 Projects.status == ProjectStatus.COMPLETED
             ).scalar() or 0
-            
+
             total_dept_projects = db.query(func.count(Projects.id)).scalar() or 0
             efficiency = (dept_projects / max(total_dept_projects, 1)) * 100 if total_dept_projects > 0 else 0
-            
+
             team_performance.append({
                 'name': dept.name,
                 'target': 100,
@@ -139,13 +138,13 @@ async def get_dashboard_overview(
             Deals.stage == DealStage.CLOSED_WON,
             Deals.created_at >= datetime.now() - timedelta(days=7)
         ).order_by(Deals.created_at.desc()).limit(2).all()
-        
+
         recent_employees = db.query(Employees).filter(
             Employees.hire_date >= date.today() - timedelta(days=7)
         ).order_by(Employees.hire_date.desc()).limit(2).all()
-        
+
         recent_activities = []
-        
+
         # Add recent deals
         for deal in recent_deals:
             hours_ago = int((datetime.now() - deal.created_at).total_seconds() / 3600)
@@ -157,7 +156,7 @@ async def get_dashboard_overview(
                 'time': f'{hours_ago} hours ago' if hours_ago < 24 else f'{hours_ago//24} days ago',
                 'status': 'success'
             })
-        
+
         # Add recent employees
         for emp in recent_employees:
             days_ago = (date.today() - emp.hire_date).days
@@ -177,12 +176,12 @@ async def get_dashboard_overview(
                 Tasks.due_date <= date.today() + timedelta(days=14)
             )
         ).order_by(Tasks.due_date).limit(4).all()
-        
+
         upcoming_task_list = []
         for task in upcoming_tasks:
             days_until = (task.due_date - date.today()).days
             due_text = 'today' if days_until == 0 else f'{days_until} days' if days_until > 1 else 'tomorrow'
-            
+
             upcoming_task_list.append({
                 'id': task.id,
                 'title': task.title,
@@ -244,7 +243,7 @@ async def get_dashboard_overview(
             'recentActivities': recent_activities[:4],  # Limit to 4 most recent
             'upcomingTasks': upcoming_task_list
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -252,7 +251,7 @@ async def get_dashboard_overview(
         )
 
 @router.get("/revenue/trends")
-async def get_revenue_trends(
+def get_revenue_trends(
     period: str = Query("monthly", enum=["daily", "weekly", "monthly", "quarterly"]),
     year: int = Query(datetime.now().year),
     db: Session = Depends(get_db),
@@ -272,10 +271,10 @@ async def get_revenue_trends(
                     func.extract('year', Deals.created_at) == year
                 )
             ).group_by(func.extract('month', Deals.created_at)).all()
-            
+
             month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            
+
             return [
                 {
                     'period': month_names[int(period_num) - 1] if period_num else 'Unknown',
@@ -284,9 +283,9 @@ async def get_revenue_trends(
                     'avgDealSize': float(avg_deal_size or 0)
                 } for period_num, revenue, deals, avg_deal_size in trends
             ]
-        
+
         return []
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -294,7 +293,7 @@ async def get_revenue_trends(
         )
 
 @router.get("/hr/metrics")
-async def get_hr_metrics(
+def get_hr_metrics(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -309,7 +308,7 @@ async def get_hr_metrics(
         ).filter(
             Departments.is_active == True
         ).group_by(Departments.name).all()
-        
+
         # Hiring trends (last 6 months)
         six_months_ago = datetime.now() - timedelta(days=180)
         hiring_trends = db.query(
@@ -318,13 +317,13 @@ async def get_hr_metrics(
         ).filter(
             Employees.hire_date >= six_months_ago.date()
         ).group_by(func.extract('month', Employees.hire_date)).all()
-        
+
         # Leave analytics
         total_leave_requests = db.query(func.count(LeaveRequests.id)).scalar() or 0
         approved_leaves = db.query(func.count(LeaveRequests.id)).filter(
             LeaveRequests.status == LeaveStatus.APPROVED
         ).scalar() or 0
-        
+
         return {
             'departmentDistribution': [
                 {'department': name or 'Unassigned', 'count': count or 0}
@@ -340,7 +339,7 @@ async def get_hr_metrics(
                 'approvalRate': (approved_leaves / max(total_leave_requests, 1)) * 100
             }
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -348,7 +347,7 @@ async def get_hr_metrics(
         )
 
 @router.get("/performance/overview")
-async def get_performance_overview(
+def get_performance_overview(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -359,22 +358,22 @@ async def get_performance_overview(
         won_deals = db.query(func.count(Deals.id)).filter(
             Deals.stage == DealStage.CLOSED_WON
         ).scalar() or 0
-        
+
         win_rate = (won_deals / max(total_deals, 1)) * 100
-        
+
         # Employee productivity
         active_employees = db.query(func.count(Employees.id)).filter(
             Employees.status == EmployeeStatus.ACTIVE
         ).scalar() or 0
-        
+
         # Project success rate
         total_projects = db.query(func.count(Projects.id)).scalar() or 0
         completed_projects = db.query(func.count(Projects.id)).filter(
             Projects.status == ProjectStatus.COMPLETED
         ).scalar() or 0
-        
+
         project_success_rate = (completed_projects / max(total_projects, 1)) * 100
-        
+
         return {
             'salesPerformance': {
                 'winRate': round(win_rate, 1),
@@ -392,7 +391,7 @@ async def get_performance_overview(
                 'budgetAdherence': 92.3   # Can be calculated from project budgets
             }
         }
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
