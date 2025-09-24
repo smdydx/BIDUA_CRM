@@ -128,7 +128,7 @@ const Dashboard = () => {
       console.error('Error fetching dashboard data:', error);
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchDashboardData();

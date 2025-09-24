@@ -8,7 +8,7 @@ channel = "stable-23.05"
 packages = ["cargo", "libiconv", "libxcrypt", "nodejs-18_x", "npm", "rustc"]
 
 [workflows]
-runButton = "Professional Production"
+runButton = "CRM HRMS Production"
 
 [[workflows.workflow]]
 name = "CRM HRMS Server"
@@ -142,6 +142,36 @@ args = "python create_admin_user.py"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main.py"
+
+[[workflows.workflow]]
+name = "CRM HRMS Production"
+author = 47930669
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python create_admin_user.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm install && npm run build"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow]]
+name = "Development Mode"
+author = 47930669
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python main.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd frontend && npm start"
 
 [[ports]]
 localPort = 3000

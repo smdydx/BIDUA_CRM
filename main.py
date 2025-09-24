@@ -346,21 +346,15 @@ if os.path.exists(build_dir):
         return FileResponse(os.path.join(build_dir, "index.html"))
 
 if __name__ == "__main__":
-    APP_ENV = os.getenv("APP_ENV", "development")
-    PORT = int(os.getenv("PORT", "8000"))
-
-    is_development = APP_ENV == "development" or PORT == 8000
-
-    if is_development:
-        port = 8000
-        host = "0.0.0.0"
-        reload = True
-        print(f"🔧 Starting FastAPI backend in DEVELOPMENT mode on {host}:{port}")
-    else:
-        port = PORT if PORT != 8000 else 5000
-        host = "0.0.0.0"
-        reload = False
-        print(f"🚀 Starting FastAPI server in PRODUCTION mode on {host}:{port}")
+    APP_ENV = os.getenv("APP_ENV", "production")
+    PORT = int(os.getenv("PORT", "5000"))
+    
+    # Always use production settings on Replit
+    host = "0.0.0.0"
+    port = PORT
+    reload = False
+    print(f"🚀 Starting CRM+HRMS Pro Server on {host}:{port}")
+    print(f"📊 API Documentation: https://{os.getenv('REPLIT_DEV_DOMAIN', 'localhost:5000')}/docs")
 
     uvicorn.run(
         "main:app",

@@ -20,6 +20,35 @@ async def get_current_user():
         "role": "admin"
     }
 
+@router.get("/dashboard")
+def get_dashboard_analytics(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive dashboard analytics"""
+    try:
+        # Get basic counts
+        total_users = db.query(Users).count()
+        total_employees = db.query(Employees).count()
+        total_companies = db.query(Companies).count()
+        total_leads = db.query(Leads).count()
+        total_deals = db.query(Deals).count()
+        total_projects = db.query(Projects).count()
+        total_tasks = db.query(Tasks).count()
+
+        return {
+            "total_users": total_users,
+            "total_employees": total_employees,
+            "total_companies": total_companies,
+            "total_leads": total_leads,
+            "total_deals": total_deals,
+            "total_projects": total_projects,
+            "total_tasks": total_tasks,
+            "revenue_by_stage": []
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analytics error: {str(e)}")
+
 @router.get("/dashboard/overview")
 async def get_dashboard_overview(
     db: Session = Depends(get_db),
@@ -112,7 +141,7 @@ async def get_dashboard_overview(
         for dept in departments:
             emp_count = db.query(func.count(Employees.id)).filter(
                 and_(
-                    Employees.department_id == dept.id, 
+                    Employees.department_id == dept.id,
                     Employees.status == EmployeeStatus.ACTIVE
                 )
             ).scalar() or 0
@@ -232,7 +261,7 @@ async def get_dashboard_overview(
             ],
             'monthlyRevenue': [
                 {
-                    'month': ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                    'month': ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][int(month)],
                     'revenue': float(revenue) / 100000,  # Convert to Lakhs
                     'target': float(revenue) / 100000 * 1.1,  # Target 10% higher

@@ -27,7 +27,6 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import axios from 'axios';
 
 const Analytics = () => {
   const [analytics, setAnalytics] = useState({
