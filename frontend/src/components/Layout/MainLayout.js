@@ -54,7 +54,7 @@ const MainLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [crmOpen, setCrmOpen] = useState(true);
@@ -106,7 +106,7 @@ const MainLayout = ({ children }) => {
         { text: 'Departments', icon: <AccountTree />, path: '/hr/departments' },
         { text: 'Designations', icon: <WorkOutline />, path: '/hr/designations' },
         { text: 'Leave Management', icon: <CalendarToday />, path: '/hr/leave' },
-        { text: 'Attendance', icon: <Assignment />, path: '/hr/attendance' },
+        { text: 'Attendance', icon: <AssignmentIcon />, path: '/hr/attendance' },
         { text: 'Payroll', icon: <Receipt />, path: '/hr/payroll' }
       ]
     },
@@ -171,7 +171,7 @@ const MainLayout = ({ children }) => {
                     <ListItemIcon sx={{ color: item.color, minWidth: 40 }}>
                       {item.icon}
                     </ListItemIcon>
-                    <ListItemText 
+                    <ListItemText
                       primary={item.text}
                       primaryTypographyProps={{ fontWeight: 500 }}
                     />
@@ -202,7 +202,7 @@ const MainLayout = ({ children }) => {
                           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
                             {child.icon}
                           </ListItemIcon>
-                          <ListItemText 
+                          <ListItemText
                             primary={child.text}
                             primaryTypographyProps={{ fontSize: '0.875rem' }}
                           />
@@ -236,7 +236,7 @@ const MainLayout = ({ children }) => {
                   <ListItemIcon sx={{ color: item.color, minWidth: 40 }}>
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText 
+                  <ListItemText
                     primary={item.text}
                     primaryTypographyProps={{ fontWeight: 500 }}
                   />
@@ -291,7 +291,7 @@ const MainLayout = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
             {location.pathname === '/dashboard' && 'Executive Dashboard'}
             {location.pathname.startsWith('/crm') && 'Customer Relationship Management'}

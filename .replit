@@ -4,7 +4,7 @@ expertMode = true
 integrations = ["python_database:1.0.0"]
 
 [nix]
-channel = "stable-25_05"
+channel = "stable-23.05"
 packages = ["cargo", "libiconv", "libxcrypt", "nodejs-18_x", "npm", "rustc"]
 
 [workflows]
@@ -142,11 +142,10 @@ externalPort = 80
 localPort = 8000
 externalPort = 8000
 
-[[ports]]
-localPort = 46583
-externalPort = 3002
-
 [deployment]
-deploymentTarget = "autoscale"
-run = ["uvicorn", "main:app", "--host", "0.0.0.0"]
-build = ["bash", "-c", "cd frontend && npm ci && npm run build"]
+deploymentTarget = "cloudrun"
+run = ["sh", "-c", "python main.py"]
+
+[env]
+APP_ENV = "production"
+PORT = "5000"
